@@ -18,8 +18,8 @@ module.exports = class extends think.Model {
     return topics;
   }
   async getDetailById(id) {
-    return this.setRelation('goods_sku', {
-      where: {status: 1}
+    return this.setRelation('goods', {
+      where: {status: 1, is_on_sale: 1}
     }).where({id: id}).find();
   }
 };

@@ -19,7 +19,7 @@ module.exports = class extends Base {
   async infoAction() {
     const id = this.get('id');
     const model = this.model('topic');
-    const data = await model.where({id: id}).find();
+    const data = await model.getDetailById(id)
 
     return this.success(data);
   }
@@ -32,15 +32,30 @@ module.exports = class extends Base {
     const values = this.post();
     const id = this.post('id');
 
-    const model = this.model('topic');
+    const topicModel = this.model('topic');
+    const topicGoodsModel = this.model('topic_goods');
     values.is_show = values.is_show ? 1 : 0;
-    values.is_new = values.is_new ? 1 : 0;
+
+    const goodsId = values.goods
+    delete values.goods
     if (id > 0) {
-      await model.where({id: id}).update(values);
+      await topicModel.where({id: id}).update(values);
+      await topicGoodsModel.where({topic_id: id}).delete()
     } else {
       delete values.id;
-      await model.add(values);
+      var topicId = await topicModel.add(values);
     }
+    let goods = []
+    goodsId.forEach(goodId => {
+      goods.push({
+        topic_id: topicId || id,
+        goods_id: goodId
+      })
+    })
+    if(goods.length > 0){
+      topicGoodsModel.addMany(goods)
+    }
+
     return this.success(values);
   }
 

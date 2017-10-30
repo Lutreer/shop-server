@@ -1,4 +1,26 @@
 module.exports = class extends think.Model {
+  get relation() {
+    return {
+      goods_sku: {
+        type: think.Model.HAS_MANY,
+        where: { status: 1, is_show: 1 },
+        field: 'id,name,retail_price,market_price,quantity_num,quantity_unit,goods_id'
+      }
+    }
+  }
+  async getHotGoods(limit) {
+    const goods = await this.setRelation(true)
+      .field(['id', 'goods_sn', 'name', 'promotion_tag', 'goods_brief','list_pic_url', 'like_volume', 'sell_volume'])
+      .where({status: 1, is_hot: 1, is_on_sale: 1})
+      .order(['sort_order ASC'])
+      .limit(limit).select();
+    return goods;
+  }
+  async getDetailById(id) {
+    return this.setRelation('goods_sku', {
+      where: {status: 1}
+    }).where({id: id}).find();
+  }
   /**
    * 获取商品的product
    * @param goodsId
@@ -47,7 +69,7 @@ module.exports = class extends think.Model {
         }
       }
     }
-
     return specificationList;
   }
+
 };

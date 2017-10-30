@@ -23,10 +23,10 @@ module.exports = class extends Base {
   async storeAction() {
     if (!this.isPost) {
       return false;
-    }
+
 
     const values = this.post();
-    const id = this.post('id');
+    const id = thi}s.post('id');
 
     const model = this.model('category');
     values.is_show = values.is_show ? 1 : 0;
@@ -42,6 +42,23 @@ module.exports = class extends Base {
   async destoryAction() {
     const id = this.post('id');
     await this.model('category').where({id: id}).limit(1).update({status: 0});
+    return this.success();
+  }
+
+  async updatePicAction() {
+    if (!this.isPost) {
+      return false;
+    }
+    const values = this.post();
+    const id = this.post('id');
+
+    const model = this.model('category');
+
+    if (id > 0) {
+      await model.where({id: id}).update(values);
+    } else {
+      return this.fail();
+    }
     return this.success();
   }
 };

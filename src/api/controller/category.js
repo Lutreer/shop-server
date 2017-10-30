@@ -22,8 +22,8 @@ module.exports = class extends Base {
     let currentGoods = null;
     let currentCategory = null;
     if (categoryId) {
-      currentCategory = await categoryModel.field(['id', 'name', 'description', 'banner_img_url']).where({'id': categoryId}).order('sort_order ASC').find()
-      currentGoods = await goodsModel.where({category_id: categoryId, is_show: 1, status: 1}).select();
+      currentCategory = await categoryModel.field(['id', 'name', 'description', 'banner_pic_url']).where({'id': categoryId}).order('sort_order ASC').find()
+      currentGoods = await goodsModel.where({category_id: categoryId, is_on_sale: 1, status: 1}).select();
     }
 
     return this.success({
