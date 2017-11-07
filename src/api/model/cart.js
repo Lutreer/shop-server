@@ -1,10 +1,22 @@
+const _ = require('lodash');
 module.exports = class extends think.Model {
+  get relation() {
+    return {
+      goods_sku: {
+        type: think.Model.BELONG_TO
+      },
+      goods: {
+        type: think.Model.BELONG_TO
+      }
+
+    }
+  }
   /**
    * 获取购物车的商品
    * @returns {Promise.<*>}
    */
   async getGoodsList() {
-    const goodsList = await this.model('cart').where({user_id: think.userId, session_id: 1}).select();
+    const goodsList = await this.model('cart').where({user_id: think.userId}).select();
     return goodsList;
   }
 
@@ -13,7 +25,7 @@ module.exports = class extends think.Model {
    * @returns {Promise.<*>}
    */
   async getCheckedGoodsList() {
-    const goodsList = await this.model('cart').where({user_id: think.userId, session_id: 1, checked: 1}).select();
+    const goodsList = await this.model('cart').where({user_id: think.userId}).select();
     return goodsList;
   }
 
@@ -22,7 +34,21 @@ module.exports = class extends think.Model {
    * @returns {Promise.<*>}
    */
   async clearBuyGoods() {
-    const $res = await this.model('cart').where({user_id: think.userId, session_id: 1, checked: 1}).delete();
+    const $res = await this.model('cart').where({user_id: think.userId}).delete();
     return $res;
+  }
+  /**
+   * 清除某一个商品
+   * @returns {Promise.<*>}
+   */
+  async removeGoods() {
+    const $res = await this.model('cart').where({user_id: think.userId, goods_}).delete();
+    return $res;
+  }
+
+  async getCartCount() {
+    const cartList = await this.model('cart').field(['number']).where({user_id: think.userId}).select();
+    let count = _.sumBy(cartList, 'number');
+    return count
   }
 };

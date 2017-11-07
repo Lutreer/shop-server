@@ -40,6 +40,7 @@ module.exports = class extends Base {
     delete values.goods
     if (id > 0) {
       await topicModel.where({id: id}).update(values);
+      // 删除所有的旧关联，TODO 可以优化
       await topicGoodsModel.where({topic_id: id}).delete()
     } else {
       delete values.id;

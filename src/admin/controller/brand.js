@@ -11,7 +11,7 @@ module.exports = class extends Base {
     const title = this.get('title') || '';
 
     const model = this.model('brand');
-    const data = await model.field(['id', 'title', 'description', 'outter_pic_url', 'inner_pic_url', 'content_pic_url', 'show_in_home', 'sort_order', 'is_show']).where({title: ['like', `%${title}%`], status: 1}).order(['sort_order ASC']).page(page, size).countSelect();
+    const data = await model.getList({page, size, title})
 
     return this.success(data);
   }
@@ -19,7 +19,7 @@ module.exports = class extends Base {
   async infoAction() {
     const id = this.get('id');
     const model = this.model('brand');
-    const data = await model.field(['id', 'title', 'description', 'outter_pic_url', 'inner_pic_url', 'content_pic_url', 'show_in_home', 'sort_order', 'is_show']).where({id: id}).find();
+    const data = await model.setRelation(true).field(['id', 'title', 'description', 'outter_pic_url', 'inner_pic_url', 'content_pic_url', 'show_in_home', 'sort_order', 'is_show']).where({id: id}).find();
 
     return this.success(data);
   }
@@ -31,17 +31,33 @@ module.exports = class extends Base {
     const values = this.post();
     const id = this.post('id');
 
-    const model = this.model('brand');
+    const brandModel = this.model('brand');
+    const brandGoodsModel = this.model('brand_goods');
     values.is_show = values.is_show ? 1 : 0;
     values.show_in_home = values.show_in_home ? 1 : 0;
 
+    const goodsId = values.goods
+    delete values.goods
     if (id > 0) {
-      await model.where({id: id}).update(values);
+      await brandModel.where({id: id}).update(values);
+      // 删除所有的旧关联，TODO 可以优化
+      await brandGoodsModel.where({brandd_id: id}).delete()
     } else {
       delete values.id;
-      await model.add(values);
+      var brandId = await brandModel.add(values);
     }
-    return this.success(values);
+    let goods = []
+    goodsId.forEach(goodId => {
+      goods.push({
+        brandd_id: brandId || id,
+        goods_id: goodId
+      })
+    })
+    if(goods.length > 0){
+      brandGoodsModel.addMany(goods)
+    }
+
+    return this.success(brandId || values.id);
   }
 
   async destoryAction() {

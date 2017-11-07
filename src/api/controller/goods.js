@@ -28,49 +28,16 @@ module.exports = class extends Base {
    */
   async detailAction() {
     const goodsId = this.get('id');
-    const model = this.model('goods');
+    const goods = await this.model('goods').getDetailById(goodsId);
 
-    const info = await model.where({'id': goodsId}).find();
-    const gallery = await this.model('goods_gallery').where({goods_id: goodsId}).limit(4).select();
-    const attribute = await this.model('goods_attribute').field('thankni_goods_attribute.value, thankni_attribute.name').join('thankni_attribute ON thankni_goods_attribute.attribute_id=thankni_attribute.id').order({'thankni_goods_attribute.id': 'asc'}).where({'thankni_goods_attribute.goods_id': goodsId}).select();
-    const issue = await this.model('goods_issue').select();
-    const brand = await this.model('brand').where({id: info.brand_id}).find();
-    const commentCount = await this.model('comment').where({value_id: goodsId, type_id: 0}).count();
-    const hotComment = await this.model('comment').where({value_id: goodsId, type_id: 0}).find();
-    let commentInfo = {};
-    if (!think.isEmpty(hotComment)) {
-      const commentUser = await this.model('user').field(['nickname', 'username', 'avatar']).where({id: hotComment.user_id}).find();
-      commentInfo = {
-        content: new Buffer(hotComment.content, 'base64').toString(),
-        add_time: think.datetime(new Date(hotComment.add_time * 1000)),
-        nickname: commentUser.nickname,
-        avatar: commentUser.avatar,
-        pic_list: await this.model('comment_picture').where({comment_id: hotComment.id}).select()
-      };
-    }
-
-    const comment = {
-      count: commentCount,
-      data: commentInfo
-    };
-
-    // 当前用户是否收藏
-    const userHasCollect = await this.model('collect').isUserHasCollect(think.userId, 0, goodsId);
-
+    const cartCount = await this.model('cart').getCartCount()
     // 记录用户的足迹 TODO
-    await await this.model('footprint').addFootprint(think.userId, goodsId);
+    // await await this.model('footprint').addFootprint(think.userId, goodsId);
 
     // return this.json(jsonData);
     return this.success({
-      info: info,
-      gallery: gallery,
-      attribute: attribute,
-      userHasCollect: userHasCollect,
-      issue: issue,
-      comment: comment,
-      brand: brand,
-      specificationList: await model.getSpecificationList(goodsId),
-      productList: await model.getProductList(goodsId)
+      goods: goods,
+      cartCount: cartCount
     });
   }
 

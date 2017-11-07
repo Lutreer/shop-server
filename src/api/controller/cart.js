@@ -49,66 +49,41 @@ module.exports = class extends Base {
    */
   async addAction() {
     const goodsId = this.post('goodsId');
-    const productId = this.post('productId');
-    const number = this.post('number');
+    const skuId = this.post('skuId');
 
     // 判断商品是否可以购买
-    const goodsInfo = await this.model('goods').where({id: goodsId}).find();
-    if (think.isEmpty(goodsInfo) || goodsInfo.is_delete === 1) {
-      return this.fail(400, '商品已下架');
+    const goodsInfo = await this.model('goods').where({id: goodsId, is_on_sale: 1, status: 1}).find();
+    if (think.isEmpty(goodsInfo)) {
+      return this.fail(400, '哎呀，商品已经下架了~');
+    }
+    if (goodsInfo.goods_volume <= 0) {
+      return this.fail(400, '哎呀，库存不足了~');
     }
 
-    // 取得规格的信息,判断规格库存
-    const productInfo = await this.model('product').where({goods_id: goodsId, id: productId}).find();
-    if (think.isEmpty(productInfo) || productInfo.goods_number < number) {
-      return this.fail(400, '库存不足');
+    // 判断商品是否可以购买
+    const skuInfo = await this.model('goods_sku').where({id: skuId, is_show: 1, status: 1}).find();
+    if (think.isEmpty(skuInfo)) {
+      return this.fail(400, '哎呀，商品已经下架了~');
     }
 
     // 判断购物车中是否存在此规格商品
-    const cartInfo = await this.model('cart').where({goods_id: goodsId, product_id: productId}).find();
+    let cartModel = this.model('cart')
+    const cartInfo = await cartModel.where({goods_id: goodsId, sku_id: skuId, user_id: think.userId}).find();
     if (think.isEmpty(cartInfo)) {
-      // 添加操作
 
-      // 添加规格名和值
-      let goodsSepcifitionValue = [];
-      if (!think.isEmpty(productInfo.goods_specification_ids)) {
-        goodsSepcifitionValue = await this.model('goods_specification').where({
-          goods_id: goodsId,
-          id: {'in': productInfo.goods_specification_ids.split('_')}
-        }).getField('value');
-      }
-
-      // 添加到购物车
-      const cartData = {
-        goods_id: goodsId,
-        product_id: productId,
-        goods_sn: productInfo.goods_sn,
-        goods_name: goodsInfo.name,
-        list_pic_url: goodsInfo.list_pic_url,
-        number: number,
-        session_id: 1,
+      const cartId = await this.model('cart').add({
         user_id: think.userId,
-        retail_price: productInfo.retail_price,
-        market_price: productInfo.retail_price,
-        goods_specifition_name_value: goodsSepcifitionValue.join(';'),
-        goods_specifition_ids: productInfo.goods_specification_ids,
-        checked: 1
-      };
+        goods_id: goodsId,
+        sku_id: skuId
+      })
 
-      await this.model('cart').thenAdd(cartData, {product_id: productId});
     } else {
-      // 如果已经存在购物车中，则数量增加
-      if (productInfo.goods_number < (number + cartInfo.number)) {
-        return this.fail(400, '库存不足');
-      }
 
       await this.model('cart').where({
-        goods_id: goodsId,
-        product_id: productId,
         id: cartInfo.id
-      }).increment('number', number);
+      }).increment('number', 1);
     }
-    return this.success(await this.getCart());
+    return this.success(200, '添加成功');
   }
 
   // 更新指定的购物车信息
@@ -216,10 +191,10 @@ module.exports = class extends Base {
 
   // 获取购物车商品的总件件数
   async goodscountAction() {
-    const cartData = await this.getCart();
+    const cartData = await this.getCartCount();
     return this.success({
       cartTotal: {
-        goodsCount: cartData.cartTotal.goodsCount
+        goodsCount: cartData
       }
     });
   }
