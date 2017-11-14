@@ -4,6 +4,9 @@ module.exports = class extends think.Model {
 
   get relation() {
     return {
+      brand: {
+        type: think.Model.BELONG_TO
+      },
       goods_sku: {
         type: think.Model.HAS_MANY,
         where: { status: 1},

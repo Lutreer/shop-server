@@ -26,7 +26,6 @@ module.exports = class extends think.Model {
         rModel: 'goods_goods',
         rfKey: 'relation_goods_id'
       }
-
     }
   }
   async getHotGoods(limit) {

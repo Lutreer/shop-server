@@ -2,9 +2,6 @@ const _ = require('lodash');
 module.exports = class extends think.Model {
   get relation() {
     return {
-      goods_sku: {
-        type: think.Model.BELONG_TO
-      },
       goods: {
         type: think.Model.BELONG_TO
       }
@@ -16,7 +13,7 @@ module.exports = class extends think.Model {
    * @returns {Promise.<*>}
    */
   async getGoodsList() {
-    const goodsList = await this.model('cart').where({user_id: think.userId}).select();
+    var goodsList = await this.setRelation(true).fieldReverse(['user_id']).where({user_id: think.userId}).select();
     return goodsList;
   }
 
@@ -46,6 +43,10 @@ module.exports = class extends think.Model {
     return $res;
   }
 
+  /**
+   * 购物车的商品数量
+   * @returns {Promise.<number>}
+   */
   async getCartCount() {
     const cartList = await this.model('cart').field(['number']).where({user_id: think.userId}).select();
     let count = _.sumBy(cartList, 'number');
