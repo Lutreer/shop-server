@@ -19,7 +19,7 @@ module.exports = class extends think.Model {
       goods_sku: {
         type: think.Model.HAS_MANY,
         where: { status: 1, is_show: 1 },
-        field: 'id,name,retail_price,market_price,quantity_num,quantity_unit,goods_id,remark'
+        field: 'id,name,retail_price,market_price,quantity_num,quantity_unit,goods_id,remark,add_cart_sym'
       },
       goods: {
         type: think.Model.MANY_TO_MANY,
@@ -28,20 +28,22 @@ module.exports = class extends think.Model {
       }
     }
   }
-  async getHotGoods(limit) {
-    const goods = await this.setRelation(true)
+  async getHotGoods(page, size) {
+    const goods = await this.setRelation('goods_sku')
       .field(['id', 'goods_sn', 'name', 'promotion_tag', 'goods_brief','list_pic_url', 'like_volume', 'sell_volume'])
       .where({status: 1, is_hot: 1, is_on_sale: 1})
       .order(['sort_order ASC'])
-      .limit(limit).select();
+      .page(page, size)
+      .countSelect();
     return goods;
   }
-  async getNewGoods(limit) {
-    const goods = await this.setRelation(true)
+  async getNewGoods(page, size) {
+    const goods = await this.setRelation('goods_sku')
       .field(['id', 'goods_sn', 'name', 'promotion_tag', 'goods_brief','list_pic_url', 'like_volume', 'sell_volume'])
       .where({status: 1, is_new: 1, is_on_sale: 1})
       .order(['sort_order ASC'])
-      .limit(limit).select();
+      .page(page, size)
+      .countSelect();
     return goods;
   }
 

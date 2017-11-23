@@ -23,7 +23,7 @@ module.exports = class extends Base {
     let currentCategory = null;
     if (categoryId) {
       currentCategory = await categoryModel.field(['id', 'name', 'description', 'banner_pic_url']).where({'id': categoryId}).order('sort_order ASC').find()
-      currentGoods = await goodsModel.where({category_id: categoryId, is_on_sale: 1, status: 1}).select();
+      currentGoods = await goodsModel.setRelation('goods_sku').where({category_id: categoryId, is_on_sale: 1, status: 1}).select();
     }
 
     return this.success({

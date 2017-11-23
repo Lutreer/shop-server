@@ -4,7 +4,6 @@ module.exports = class extends think.Controller {
     think.token = this.ctx.header['x-thankni-token'] || '';
     const tokenSerivce = think.service('token', 'api');
     think.userId = await tokenSerivce.getUserId();
-
     const publicController = this.config('publicController');
     const publicAction = this.config('publicAction');
     // 如果为非公开，则验证用户是否登录

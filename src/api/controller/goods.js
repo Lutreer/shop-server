@@ -8,19 +8,7 @@ module.exports = class extends Base {
     return this.success(goodsList);
   }
 
-  /**
-   * 获取sku信息，用于购物车编辑时选择规格
-   * @returns {Promise.<Promise|PreventPromise|void>}
-   */
-  async skuAction() {
-    const goodsId = this.get('id');
-    const model = this.model('goods');
 
-    return this.success({
-      specificationList: await model.getSpecificationList(goodsId),
-      productList: await model.getProductList(goodsId)
-    });
-  }
 
   /**
    * 商品详情页数据
@@ -197,55 +185,55 @@ module.exports = class extends Base {
   }
 
   /**
-   * 新品首发
+   * 新品首发type=1 or 人气推荐type=2的banner
    * @returns {Promise.<Promise|void|PreventPromise>}
    */
-  async newAction() {
-    return this.success({
-      bannerInfo: {
-        url: '',
-        name: '坚持初心，为你寻觅世间好物',
-        img_url: 'http://yanxuan.nosdn.127.net/8976116db321744084774643a933c5ce.png'
-      }
-    });
+  async rankingBannerAction() {
+    const type = this.get('type');
+    let bannerInfo = await this.model('goods_banner').where({type: type}).find()
+    return this.success(bannerInfo);
   }
-
   /**
-   * 人气推荐
+   * 新品首发type=1 or 人气推荐type=2的商品
    * @returns {Promise.<Promise|void|PreventPromise>}
    */
-  async hotAction() {
-    return this.success({
-      bannerInfo: {
-        url: '',
-        name: '大家都在买的严选好物',
-        img_url: 'http://yanxuan.nosdn.127.net/8976116db321744084774643a933c5ce.png'
-      }
-    });
-  }
-
-  /**
-   * 商品详情页的大家都在看的商品
-   * @returns {Promise.<Promise|PreventPromise|void>}
-   */
-  async relatedAction() {
-    // 大家都在看商品,取出关联表的商品，如果没有则随机取同分类下的商品
-    const model = this.model('goods');
-    const goodsId = this.get('id');
-    const relatedGoodsIds = await this.model('related_goods').where({goods_id: goodsId}).getField('related_goods_id');
-    let relatedGoods = null;
-    if (think.isEmpty(relatedGoodsIds)) {
-      // 查找同分类下的商品
-      const goodsCategory = await model.where({id: goodsId}).find();
-      relatedGoods = await model.where({category_id: goodsCategory.category_id}).field(['id', 'name', 'list_pic_url', 'retail_price']).limit(8).select();
-    } else {
-      relatedGoods = await model.where({id: ['IN', relatedGoodsIds]}).field(['id', 'name', 'list_pic_url', 'retail_price']).select();
+  async rankingAction() {
+    const type = this.get('type');
+    const page = this.get('page') || 0;
+    const size = this.get('size') || 10;
+    let goods = null
+    if(type == 1) {
+      goods= await this.model('goods').getNewGoods(page, size)
+    }else if(type == 2){
+      goods = await this.model('goods').getHotGoods(page, size)
     }
 
-    return this.success({
-      goodsList: relatedGoods
-    });
+    return this.success(goods);
   }
+
+
+  // /**
+  //  * 商品详情页的大家都在看的商品
+  //  * @returns {Promise.<Promise|PreventPromise|void>}
+  //  */
+  // async relatedAction() {
+  //   // 大家都在看商品,取出关联表的商品，如果没有则随机取同分类下的商品
+  //   const model = this.model('goods');
+  //   const goodsId = this.get('id');
+  //   const relatedGoodsIds = await this.model('related_goods').where({goods_id: goodsId}).getField('related_goods_id');
+  //   let relatedGoods = null;
+  //   if (think.isEmpty(relatedGoodsIds)) {
+  //     // 查找同分类下的商品
+  //     const goodsCategory = await model.where({id: goodsId}).find();
+  //     relatedGoods = await model.where({category_id: goodsCategory.category_id}).field(['id', 'name', 'list_pic_url', 'retail_price']).limit(8).select();
+  //   } else {
+  //     relatedGoods = await model.where({id: ['IN', relatedGoodsIds]}).field(['id', 'name', 'list_pic_url', 'retail_price']).select();
+  //   }
+  //
+  //   return this.success({
+  //     goodsList: relatedGoods
+  //   });
+  // }
 
   /**
    * 在售的商品总数

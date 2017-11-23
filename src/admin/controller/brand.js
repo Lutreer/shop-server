@@ -19,8 +19,7 @@ module.exports = class extends Base {
   async infoAction() {
     const id = this.get('id');
     const model = this.model('brand');
-    const data = await model.setRelation(true).field(['id', 'title', 'description', 'outter_pic_url', 'inner_pic_url', 'content_pic_url', 'show_in_home', 'sort_order', 'is_show']).where({id: id}).find();
-
+    const data = await model.getDetailById(id);
     return this.success(data);
   }
 

@@ -17,12 +17,6 @@ module.exports = {
   publicAction: [
     // 格式为： controller+action
     'comment/list',
-    'comment/count',
-    'cart/index',
-    'cart/add',
-    'cart/checked',
-    'cart/update',
-    'cart/delete',
-    'cart/goodscount'
+    'comment/count'
   ]
 };

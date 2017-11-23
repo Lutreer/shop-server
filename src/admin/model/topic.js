@@ -13,7 +13,7 @@ module.exports = class extends think.Model {
     }
   }
   async getList(data) {
-    const topics = await this.setRelation(true).where({title: ['like', `%${data.title}%`]}).order(['sort_order ASC']).page(data.page, data.size).countSelect();
+    const topics = await this.setRelation(true).where({title: ['like', `%${data.title}%`], status: 1}).order(['sort_order ASC']).page(data.page, data.size).countSelect();
     return topics;
   }
   async getDetailById(id) {

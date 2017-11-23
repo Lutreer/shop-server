@@ -21,10 +21,10 @@ module.exports = class extends think.Model {
    * 获取购物车的选中的商品
    * @returns {Promise.<*>}
    */
-  async getCheckedGoodsList() {
-    const goodsList = await this.model('cart').where({user_id: think.userId}).select();
-    return goodsList;
-  }
+  // async getCheckedGoodsList() {
+  //   const goodsList = await this.model('cart').where({user_id: think.userId}).select();
+  //   return goodsList;
+  // }
 
   /**
    * 清空已购买的商品
