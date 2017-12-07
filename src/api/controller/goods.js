@@ -5,7 +5,8 @@ module.exports = class extends Base {
     const model = this.model('goods');
     const goodsList = await model.select();
 
-    return this.success(goodsList);
+    return this.success(goodsList)
+
   }
 
 

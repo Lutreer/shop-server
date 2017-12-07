@@ -10,7 +10,8 @@ module.exports = class extends think.Model {
       goods: {
         type: think.Model.MANY_TO_MANY,
         rModel: 'goods_goods',
-        rfKey: 'relation_goods_id'
+        rfKey: 'relation_goods_id',
+        where: {status: 1, is_on_sale: 1}
       }
     }
   }

@@ -6,16 +6,7 @@ module.exports = class extends Base {
    * @return {Promise} []
    */
   async listAction() {
-    const addressList = await this.model('address').where({user_id: think.userId}).select();
-    let itemKey = 0;
-    for (const addressItem of addressList) {
-      addressList[itemKey].province_name = await this.model('region').getRegionName(addressItem.province_id);
-      addressList[itemKey].city_name = await this.model('region').getRegionName(addressItem.city_id);
-      addressList[itemKey].district_name = await this.model('region').getRegionName(addressItem.district_id);
-      addressList[itemKey].full_region = addressList[itemKey].province_name + addressList[itemKey].city_name + addressList[itemKey].district_name;
-      itemKey += 1;
-    }
-
+    const addressList = await this.model('address').getList()
     return this.success(addressList);
   }
 
@@ -24,17 +15,13 @@ module.exports = class extends Base {
    * @return {Promise} []
    */
   async detailAction() {
-    const addressId = this.get('id');
-
-    const addressInfo = await this.model('address').where({user_id: think.userId, id: addressId}).find();
-    if (!think.isEmpty(addressInfo)) {
-      addressInfo.province_name = await this.model('region').getRegionName(addressInfo.province_id);
-      addressInfo.city_name = await this.model('region').getRegionName(addressInfo.city_id);
-      addressInfo.district_name = await this.model('region').getRegionName(addressInfo.district_id);
-      addressInfo.full_region = addressInfo.province_name + addressInfo.city_name + addressInfo.district_name;
+    const addressId = this.get('id')
+    let addressInfo
+    if (addressId) {
+      addressInfo = await this.model('address').getDetailById(addressId)
     }
 
-    return this.success(addressInfo);
+    return this.success(addressInfo)
   }
 
   /**
@@ -82,5 +69,30 @@ module.exports = class extends Base {
     await this.model('address').where({id: addressId, user_id: think.userId}).delete();
 
     return this.success('删除成功');
+  }
+  /**
+   * 获取默认收货地址
+   * @returns {Promise.<Promise|PreventPromise|void>}
+   */
+  async defaultAction() {
+    const addressInfo = await this.model('address').where({is_default: 1, user_id: think.userId}).find();
+    if (!think.isEmpty(addressInfo)) {
+      addressInfo.province_name = await this.model('region').getRegionName(addressInfo.province_id);
+      addressInfo.city_name = await this.model('region').getRegionName(addressInfo.city_id);
+      addressInfo.district_name = await this.model('region').getRegionName(addressInfo.district_id);
+      addressInfo.full_region = addressInfo.province_name + addressInfo.city_name + addressInfo.district_name;
+    }
+
+    return this.success(addressInfo);
+  }
+
+  /**
+   * 获取学校
+   * @returns {Promise.<Promise|PreventPromise|void>}
+   */
+  async collegeAction() {
+    const college = await this.model('college').where({is_show: 1, status: 1}).order(['sort_order ASC']).select();
+
+    return this.success(college);
   }
 };

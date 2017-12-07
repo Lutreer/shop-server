@@ -25,7 +25,6 @@ module.exports = class extends Base {
     const sessionKey = await TokenSerivce.create({
       user_id: admin.id
     });
-debugger
     if (think.isEmpty(sessionKey)) {
       return this.fail('登录失败');
     }

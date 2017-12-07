@@ -37,6 +37,7 @@ module.exports = class extends Base {
   async addAction() {
     const goodsId = this.post('goodsId');
     const skuId = this.post('skuId');
+    const goodsNum = this.post('goodsNum') || 1;
 
     // 判断商品是否可以购买
     const goodsInfo = await this.model('goods').where({id: goodsId, is_on_sale: 1, status: 1}).find();
@@ -68,7 +69,7 @@ module.exports = class extends Base {
 
       await this.model('cart').where({
         id: cartInfo.id
-      }).increment('number', 1);
+      }).increment('number', goodsNum);
     }
     return this.success(200, '添加成功');
   }
@@ -144,46 +145,22 @@ module.exports = class extends Base {
     // 选择的收货地址
     let checkedAddress = null;
     if (addressId) {
-      checkedAddress = await this.model('address').where({is_default: 1, user_id: think.userId}).find();
+      checkedAddress = await this.model('address').getDetailById(addressId)
     } else {
-      checkedAddress = await this.model('address').where({id: addressId, user_id: think.userId}).find();
+      checkedAddress = await this.model('address').getDefault()
     }
 
-    if (!think.isEmpty(checkedAddress)) {
-      checkedAddress.province_name = await this.model('region').getRegionName(checkedAddress.province_id);
-      checkedAddress.city_name = await this.model('region').getRegionName(checkedAddress.city_id);
-      checkedAddress.district_name = await this.model('region').getRegionName(checkedAddress.district_id);
-      checkedAddress.full_region = checkedAddress.province_name + checkedAddress.city_name + checkedAddress.district_name;
-    }
+    const appConfig = await this.model('app_config').where({status: 1, app_type: 'mina'}).find();
+    // 告诉前端运费最低消费
+    const freightLimit = appConfig.freight_limit;
+    // 运费
+    const freightPrice = appConfig.freight_price;
 
-    // 根据收货地址计算运费
-    const freightPrice = 0.00;
-
-    // 获取要购买的商品
-    const cartData = await this.getCart();
-    const checkedGoodsList = cartData.cartList.filter(function(v) {
-      return v.checked === 1;
-    });
-
-    // 获取可用的优惠券信息，功能还示实现
-    const couponList = await this.model('user_coupon').select();
-    const couponPrice = 0.00; // 使用优惠券减免的金额
-
-    // 计算订单的费用
-    const goodsTotalPrice = cartData.cartTotal.checkedGoodsAmount; // 商品总价
-    const orderTotalPrice = cartData.cartTotal.checkedGoodsAmount + freightPrice - couponPrice; // 订单的总价
-    const actualPrice = orderTotalPrice - 0.00; // 减去其它支付的金额后，要实际支付的金额
 
     return this.success({
       checkedAddress: checkedAddress,
-      freightPrice: freightPrice,
-      checkedCoupon: {},
-      couponList: couponList,
-      couponPrice: couponPrice,
-      checkedGoodsList: checkedGoodsList,
-      goodsTotalPrice: goodsTotalPrice,
-      orderTotalPrice: orderTotalPrice,
-      actualPrice: actualPrice
+      freightLimit:freightLimit,
+      freightPrice:freightPrice
     });
   }
 };
