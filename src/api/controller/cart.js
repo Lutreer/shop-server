@@ -146,8 +146,17 @@ module.exports = class extends Base {
     let checkedAddress = null;
     if (addressId) {
       checkedAddress = await this.model('address').getDetailById(addressId)
+      if(!checkedAddress.id){
+        checkedAddress = await this.model('address').getDefault()
+        if(!checkedAddress.id){
+          checkedAddress = await this.model('address').getFirst()
+        }
+      }
     } else {
       checkedAddress = await this.model('address').getDefault()
+      if(!checkedAddress.id){
+        checkedAddress = await this.model('address').getFirst()
+      }
     }
 
     const appConfig = await this.model('app_config').where({status: 1, app_type: 'mina'}).find();

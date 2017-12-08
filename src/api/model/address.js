@@ -24,6 +24,10 @@ module.exports = class extends think.Model {
     const address = await this.setRelation(true).where({user_id: think.userId, is_default: 1}).find();
     return address
   }
+  async getFirst() {
+    const address = await this.setRelation(true).where({user_id: think.userId}).limit(1).select();
+    return address[0]
+  }
 
 
 };

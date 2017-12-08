@@ -34,9 +34,10 @@ module.exports = class extends Base {
     const addressData = {
       name: this.post('name'),
       mobile: this.post('mobile'),
-      province_id: this.post('province_id'),
-      city_id: this.post('city_id'),
-      district_id: this.post('district_id'),
+      // province_id: this.post('province_id'),
+      // city_id: this.post('city_id'),
+      // district_id: this.post('district_id'),
+      college_id: this.post('college_id'),
       address: this.post('address'),
       user_id: this.getLoginUserId(),
       is_default: this.post('is_default') === true ? 1 : 0
