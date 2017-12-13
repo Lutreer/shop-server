@@ -96,4 +96,18 @@ module.exports = class extends Base {
 
     return this.success(college);
   }
-};
+
+
+
+  async pushAction() {
+    debugger
+    return this.success()
+    // const encryptedData = this.post('encryptedData')
+    // const tokenSerivce = think.service('token', 'api');
+    // const sessionData = await tokenSerivce.parse();
+    //
+    // const sessionKey = sessionData.session_key;
+    // var pc = new WXBizDataCrypt(appId, sessionKey)
+    // var stepData = pc.decryptData(encryptedData.encryptedData , encryptedData.iv)
+  }
+  };

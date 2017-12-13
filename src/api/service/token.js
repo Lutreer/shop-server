@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const secret = 'SLDLKKDS323ssdd@#@@gf';
+const JWT_SECRET = require('../../common/config/secret').JWT_SECRET
 
 module.exports = class extends think.Service {
   /**
@@ -34,14 +34,14 @@ module.exports = class extends think.Service {
   }
 
   async create(userInfo) {
-    const token = jwt.sign(userInfo, secret);
+    const token = jwt.sign(userInfo, JWT_SECRET);
     return token;
   }
 
   async parse() {
     if (think.token) {
       try {
-        return jwt.verify(think.token, secret);
+        return jwt.verify(think.token, JWT_SECRET);
       } catch (err) {
         return null;
       }

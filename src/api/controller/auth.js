@@ -1,6 +1,9 @@
 const Base = require('./base.js');
 const rp = require('request-promise');
 const _ = require('lodash');
+const moment = require('moment');
+const APP_SECRET = require('../../common/config/secret').APP_SECRET
+const APP_APPID = require('../../common/config/secret').APP_APPID
 
 module.exports = class extends Base {
   /**
@@ -25,8 +28,8 @@ module.exports = class extends Base {
       qs: {
         grant_type: 'authorization_code',
         js_code: code,
-        secret: 'ddd3b456ee269750eda6ded093e9d065',
-        appid: 'wx628852298e20424e'
+        secret: APP_SECRET,
+        appid: APP_APPID
       }
     };
 
@@ -41,7 +44,7 @@ module.exports = class extends Base {
     const crypto = require('crypto');
     const sha1 = crypto.createHash('sha1').update(fullUserInfo.rawData + sessionData.session_key).digest('hex');
     if (fullUserInfo.signature !== sha1) {
-      return this.fail('登录失败');
+      return this.fail('登录失败')
     }
 
     // 根据openid查找用户是否已经注册
@@ -52,9 +55,9 @@ module.exports = class extends Base {
       userId = await this.model('user').add({
         username: '微信用户' + think.uuid(6),
         password: sessionData.openid,
-        register_time: parseInt(new Date().getTime() / 1000),
+        register_time: moment().format('YYYY-MM-DD HH:mm:ss.SSS'),
         register_ip: ip,
-        last_login_time: parseInt(new Date().getTime() / 1000),
+        last_login_time: moment().format('YYYY-MM-DD HH:mm:ss.SSS'),
         last_login_ip: ip,
         weixin_openid: sessionData.openid,
         avatar: userInfo.avatarUrl,
@@ -70,7 +73,7 @@ module.exports = class extends Base {
 
     // 更新登录信息
     userId = await this.model('user').where({ id: userId }).update({
-      last_login_time: parseInt(new Date().getTime() / 1000),
+      last_login_time: moment().format('YYYY-MM-DD HH:mm:ss.SSS'),
       last_login_ip: ip
     });
 

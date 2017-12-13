@@ -1,7 +1,7 @@
 const Base = require('./base.js');
 const qiniu = require('qiniu')
-const accessKey = 'I7F2D0oeSz9LanpHH_1P0YuI87XJzNspv0qDWaPo';
-const secretKey = 'WTaXAQo5eQzxKEHu-FPi93DXo431k-UOjKLFkjfT';
+const accessKey = require('../../common/config/secret').QINIU_ACCESSKEY
+const secretKey = require('../../common/config/secret').QINIU_SECRETKEY
 const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
 module.exports = class extends Base {
   async uploadTokenAction() {
