@@ -11,7 +11,7 @@ module.exports = class extends Base {
    *
    */
   async werunListAction() {
-    const dateType = this.post('date') || 'today'
+    const dateType = this.get('date') || 'today'
     const date = dateType == 'today' ? moment().format('YYYY-MM-DD') : moment().add(-1, 'days').format('YYYY-MM-DD')
 
     const appConfig = await this.model('app_config')
@@ -103,7 +103,7 @@ module.exports = class extends Base {
           nickname:userInfo.nickname,
           gender: userInfo.gender,
           steps: steps,
-          remark: yestInfo.remark || "",
+          remark: yestInfo.remark || "求赞啊",
           avatar:userInfo.avatar,
           update_time: moment().format('YYYY-MM-DD HH:mm:ss.SSS'),
           step_date: moment(stepData.stepInfoList[stepData.stepInfoList.length - 1].timestamp * 1000).format('YYYY-MM-DD')
@@ -122,22 +122,54 @@ module.exports = class extends Base {
 
 
   }
+  async praiseOthersAction() {
+    if (!this.isPost) {
+      return false;
+    }
 
+    // 检查点赞者是否可以点赞
+    const date = moment().format('YYYY-MM-DD')
+    const model = this.model('werun');
+    const myRun = await model
+      .where({status: 1, user_id: think.userId, step_date:date})
+      .find()
+    const appConfig = await this.model('app_config')
+      .where({status: 1, app_type: 'mina'})
+      .field(['werun_deadline', 'werun_ded_peice_limit', 'werun_ded_status', 'werun_ded_steps','werun_ded_steps_peice', 'werun_praise_limit', 'werun_praise_steps', 'werun_ranking_limit_num'])
+      .find();
+    if(myRun.praise_times >= appConfig.werun_praise_limit){
+      return this.fail(403, '每天最多赞3次', '');
+    }
+
+    const values = this.post();
+    const id = values.id;
+
+    if (id && id > 0) {
+      await model.where({id: id}).increment('praise', 1);
+      await model.where({id: myRun.id}).increment('praise_times', 1);
+    } else {
+      return this.fail(400, '不存在该用户', '');
+    }
+    return this.success();
+  }
 
   async updateWerunInfoAction() {
+    debugger
     if (!this.isPost) {
       return false;
     }
     const values = this.post();
-    const id = values.id;
+    const id = values.id * 1;
 
     const model = this.model('werun');
 
-    if (id & id > 0) {
+    if (id && id > 0) {
       await model.where({id: id}).update({remark: values.remark});
     } else {
       return this.fail();
     }
     return this.success();
   }
+
+
 };

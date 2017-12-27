@@ -159,17 +159,14 @@ module.exports = class extends Base {
       }
     }
 
-    const appConfig = await this.model('app_config').where({status: 1, app_type: 'mina'}).find();
-    // 告诉前端运费最低消费
-    const freightLimit = appConfig.freight_limit;
-    // 运费
-    const freightPrice = appConfig.freight_price;
-
+    const appConfig = await this.model('app_config')
+      .where({status: 1, app_type: 'mina'})
+      .field(['freight_limit', 'freight_price', 'werun_ded_steps', 'werun_ded_status', 'werun_ded_steps_peice'])
+      .find();
 
     return this.success({
       checkedAddress: checkedAddress,
-      freightLimit:freightLimit,
-      freightPrice:freightPrice
+      appConfig:appConfig
     });
   }
 };
