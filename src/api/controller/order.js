@@ -71,94 +71,141 @@ module.exports = class extends Base {
   /**
    * 提交订单
    * @returns {Promise.<void>}
+   * 注意：1. 为防止用户下单时出现产品下架了，尽量在用户不可能下单的时间段去更新产品
    */
   async submitAction() {
+
     // 获取收货地址信息和计算运费
-    const addressId = this.post('addressId');
-    const checkedAddress = await this.model('address').where({id: addressId}).find();
-    if (think.isEmpty(checkedAddress)) {
-      return this.fail('请选择收货地址');
-    }
-    const freightPrice = 0.00;
+    // let orderData = {
+    //   addressId: this.data.checkedAddress.id,
+    //   isUseWerun: this.data.useWerun,
+    //   werunMoney: this.data.werunDedPrice,
+    //   weightMoney: this.data.freight,
+    //   goods: [{goodId, skuId, number}],
+    //   payMoney: this.data.payPrice
+    // }
+    const orderData = this.post();
 
-    // 获取要购买的商品
-    const checkedGoodsList = await this.model('cart').where({user_id: think.userId, session_id: 1, checked: 1}).select();
-    if (think.isEmpty(checkedGoodsList)) {
-      return this.fail('请选择商品');
-    }
+    // 验证商品是否可用，并记录当前的商品（下单的规格）价格
+    let goodsTotalPrice = 0.00 // 计算总价并与提交的价格对比何时数据的准确性
+    for(let i = 0, l = orderData.goods.length; i < l; i++){
+      let good = await this.model('goods').findByGoodIdAndSkuId(orderData.goods[i].goodId)
 
-    // 统计商品总价
-    let goodsTotalPrice = 0.00;
-    for (const cartItem of checkedGoodsList) {
-      goodsTotalPrice += cartItem.number * cartItem.retail_price;
-    }
+      if(!good.id){
+        return this.fail(2001, '部分商品已下架')
+      }
 
-    // 获取订单使用的优惠券
-    const couponId = this.post('couponId');
-    const couponPrice = 0.00;
-    if (!think.isEmpty(couponId)) {
+      let hasSku = false
+      for(let j = 0, len = good.goods_sku.length; j < len; j++){
+        if(good.goods_sku[j].id === orderData.goods[i].skuId) {
+          orderData.goods[i].retail_price = good.goods_sku[j].retail_price
+          orderData.goods[i].market_price = good.goods_sku[j].market_price
 
-    }
-
-    // 订单价格计算
-    const orderTotalPrice = goodsTotalPrice + freightPrice - couponPrice; // 订单的总价
-    const actualPrice = orderTotalPrice - 0.00; // 减去其它支付的金额后，要实际支付的金额
-    const currentTime = parseInt(this.getTime() / 1000);
-
-    const orderInfo = {
-      order_sn: this.model('order').generateOrderNumber(),
-      user_id: think.userId,
-
-      // 收货地址和运费
-      consignee: checkedAddress.name,
-      mobile: checkedAddress.mobile,
-      province: checkedAddress.province_id,
-      city: checkedAddress.city_id,
-      district: checkedAddress.district_id,
-      address: checkedAddress.address,
-      freight_price: 0.00,
-
-      // 留言
-      postscript: this.post('postscript'),
-
-      // 使用的优惠券
-      coupon_id: 0,
-      coupon_price: couponPrice,
-
-      add_time: currentTime,
-      goods_price: goodsTotalPrice,
-      order_price: orderTotalPrice,
-      actual_price: actualPrice
-    };
-
-    // 开启事务，插入订单信息和订单商品
-    const orderId = await this.model('order').add(orderInfo);
-    orderInfo.id = orderId;
-    if (!orderId) {
-      return this.fail('订单提交失败');
+          orderData.goods[i].name = good.name
+          orderData.goods[i].list_pic_url = good.list_pic_url
+          orderData.goods[i].sku_name = good.goods_sku[j].name
+          goodsTotalPrice = goodsTotalPrice + good.goods_sku[j].retail_price * Math.abs(orderData.goods[i].number)
+          hasSku = true
+          break
+        }
+      }
+      if(!hasSku) {
+        return this.fail(2001, '部分商品已下架') // 该产品规格下架了
+      }
     }
 
-    // 统计商品总价
-    const orderGoodsData = [];
-    for (const goodsItem of checkedGoodsList) {
-      orderGoodsData.push({
-        order_id: orderId,
-        goods_id: goodsItem.goods_id,
-        goods_sn: goodsItem.goods_sn,
-        product_id: goodsItem.product_id,
-        goods_name: goodsItem.goods_name,
-        list_pic_url: goodsItem.list_pic_url,
-        market_price: goodsItem.market_price,
-        retail_price: goodsItem.retail_price,
-        number: goodsItem.number,
-        goods_specifition_name_value: goodsItem.goods_specifition_name_value,
-        goods_specifition_ids: goodsItem.goods_specifition_ids
-      });
+    // 到这一步说明订单中的商品是可购买的，不存在下架
+    // 验证收货地址是否可用
+    if(orderData.address.id){
+      let address = await this.model('address').getDetailById(orderData.address.id)
+      if(!address.id){
+        // 不存在该收货地址，或已经被删除
+        return this.fail(2002, '收货地址错误') // 该产品规格下架了
+      }else{
+        //完善收货详细信息
+        orderData.address['name'] = address.name
+        orderData.address['mobile'] = address.mobile
+        orderData.address['college'] = address.college.name
+        orderData.address['address'] = address.address
+      }
+    }else{
+      // 没有收货地址
+      return this.fail(2002, '收货地址错误')
     }
 
-    await this.model('order_goods').addMany(orderGoodsData);
-    await this.model('cart').clearBuyGoods();
+    // 计算运费和微信运动抵扣的费用
+    const date = moment().format('YYYY-MM-DD')
 
-    return this.success({orderInfo: orderInfo});
+      // .field(['werun_deadline', 'werun_ded_peice_limit', 'werun_ded_status', 'werun_ded_steps','werun_ded_steps_peice', 'werun_praise_limit', 'werun_praise_steps', 'werun_ranking_limit_num'])
+    const appConfig = await this.model('app_config')
+      .where({status: 1, app_type: 'mina'})
+      .find();
+
+    // 系统开启了微信抵扣且用户使用了微信抵扣
+    if(appConfig.werun_ded_status == 1 && orderData.isUseWerun){
+      // TODO 可能会出现用户在零点临界点下单导致微信步数抵扣计算不符的情况，暂时返回错误让用户重新下单，以后再做优化
+      const myRun = await this.model('werun')
+        .where({status: 1, user_id: think.userId, step_date:date})
+        .find()
+
+      // 计算用户使用的步数是否大于剩余可用步数
+      let orderUseSteps = orderData.werunMoney * appConfig.werun_ded_steps
+      let restSteps = myRun.steps - myRun.consume_steps
+
+      // 使用的步数超过剩余步数
+      if(orderUseSteps > restSteps){
+        return this.fail(2003, '微信步数抵扣错误')
+      }
+    }else{
+      orderData.werunMoney = 0
+    }
+
+
+    // 计算该所需单运费
+    let weightPrce = goodsTotalPrice > appConfig.freight_limit ? 0 : appConfig.freight_price
+    // 验证提交的运费是否正确
+    if(orderData.weightMoney < weightPrce){
+      return this.fail(2004, '运费错误')
+    }
+
+    // 验证实付费用
+    let realPay = goodsTotalPrice + weightPrce - orderData.werunMoney
+    if(Math.abs(orderData.payMoney - realPay) > 0.1){// 暂时允许1毛钱的误差
+      return this.fail(2005, '订单金额错误')
+    }
+
+
+    //验证通过，存储订单
+    // order 表的数据 wm:wechat mina, g:goods.length, p: real pay, a: address.id
+    let orderSN = 'wm' + moment().format('YYYYMMDDHHMMssSSS') + 'g' + orderData.goods.length + 'p' + payMoney * 100 + 'a' + orderData.address.id
+    let orderTable = {
+      sn: orderSN, // 序列号
+      user_id: think.userId,// 下单人id
+      status: 2, //0: 订单删除，1:订单失效， 2:下单未付款，3:已付款，4:订单取消, 5:已发货，6:已签收，7: 已退货
+      pay_way: 1,//1:微信，2:支付宝
+      weight_pay: orderData.weightMoney, // 运费
+      werun_ded: orderData.werunMoney, // 微信抵扣费用
+      order_pay: orderData.payMoney, // 实付金额
+
+      address_id: orderData.address.id,
+      address_name:orderData.address.name,
+      address_mobile:orderData.address.mobile,
+      address_college:orderData.address.college,
+      address_address:orderData.address.address,
+    }
+    console.log(JSON.stringify(orderData))
+
+
+
+
+
+    return this.success()
+
+
+
+    // await this.model('order_goods').addMany(orderGoodsData);
+    // await this.model('cart').clearBuyGoods();
+    //
+    // return this.success({orderInfo: orderInfo});
   }
 };
