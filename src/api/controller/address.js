@@ -61,7 +61,7 @@ module.exports = class extends Base {
   }
 
   /**
-   * 删除指定的收货地址
+   * 删除指定的收货地址（真删除，以后要做假删除）
    * @returns {Promise.<Promise|PreventPromise|void>}
    */
   async deleteAction() {
@@ -98,16 +98,4 @@ module.exports = class extends Base {
   }
 
 
-
-  async pushAction() {
-    debugger
-    return this.success()
-    // const encryptedData = this.post('encryptedData')
-    // const tokenSerivce = think.service('token', 'api');
-    // const sessionData = await tokenSerivce.parse();
-    //
-    // const sessionKey = sessionData.session_key;
-    // var pc = new WXBizDataCrypt(appId, sessionKey)
-    // var stepData = pc.decryptData(encryptedData.encryptedData , encryptedData.iv)
-  }
   };

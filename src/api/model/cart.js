@@ -17,14 +17,6 @@ module.exports = class extends think.Model {
     return goodsList;
   }
 
-  /**
-   * 获取购物车的选中的商品
-   * @returns {Promise.<*>}
-   */
-  // async getCheckedGoodsList() {
-  //   const goodsList = await this.model('cart').where({user_id: think.userId}).select();
-  //   return goodsList;
-  // }
 
   /**
    * 清空已购买的商品
@@ -35,7 +27,7 @@ module.exports = class extends think.Model {
     return $res;
   }
   /**
-   * 清除某一个商品
+   * 清除某一个商品（真删除）
    * @returns {Promise.<*>}
    */
   async removeGoods() {

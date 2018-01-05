@@ -1,5 +1,6 @@
 const Base = require('./base.js');
 const _ = require('lodash');
+const moment = require('moment');
 module.exports = class extends Base {
   /**
    * 获取购物车中的数据
@@ -143,30 +144,47 @@ module.exports = class extends Base {
     // const couponId = this.get('couponId'); // 使用的优惠券id
 
     // 选择的收货地址
+    let addressModel = this.model('address')
     let checkedAddress = null;
     if (addressId) {
-      checkedAddress = await this.model('address').getDetailById(addressId)
+      checkedAddress = await addressModel.getDetailById(addressId)
       if(!checkedAddress.id){
-        checkedAddress = await this.model('address').getDefault()
+        checkedAddress = await addressModel.getDefault()
         if(!checkedAddress.id){
-          checkedAddress = await this.model('address').getFirst()
+          checkedAddress = await addressModel.getFirst()
         }
       }
     } else {
-      checkedAddress = await this.model('address').getDefault()
+      checkedAddress = await addressModel.getDefault()
       if(!checkedAddress.id){
-        checkedAddress = await this.model('address').getFirst()
+        checkedAddress = await addressModel.getFirst()
       }
     }
 
     const appConfig = await this.model('app_config')
       .where({status: 1, app_type: 'mina'})
-      .field(['freight_limit', 'freight_price', 'werun_ded_steps', 'werun_ded_status', 'werun_ded_steps_peice'])
+      .field(['freight_limit', 'freight_price', 'werun_ded_steps', 'werun_ded_status', 'werun_ded_steps_peice', 'werun_ded_order_mini_price'])
       .find();
+
+    // 是否开启微信抵扣
+    var restWerunSteps = 0 // 剩余可抵扣的步数
+    var werunMaxDedUnits = 0 // 最大可抵扣的单位数量
+    if(appConfig.werun_ded_status == 1){
+      var myWerun = await this.model('werun')
+        .where({status: 1, user_id: think.userId, step_date: moment().format('YYYY-MM-DD')})
+        .find()
+      if(myWerun.steps){
+        restWerunSteps = myWerun.steps - myWerun.consume_steps
+        werunMaxDedUnits = parseInt(restWerunSteps/appConfig.werun_ded_steps, 10)
+      }
+
+    }
 
     return this.success({
       checkedAddress: checkedAddress,
-      appConfig:appConfig
+      appConfig:appConfig,
+      restWerunSteps: restWerunSteps,
+      werunMaxDedUnits: werunMaxDedUnits
     });
   }
 };

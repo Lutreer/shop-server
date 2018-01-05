@@ -89,21 +89,30 @@ module.exports = class extends Base {
     // 验证商品是否可用，并记录当前的商品（下单的规格）价格
     let goodsTotalPrice = 0.00 // 计算总价并与提交的价格对比何时数据的准确性
     for(let i = 0, l = orderData.goods.length; i < l; i++){
-      let good = await this.model('goods').findByGoodIdAndSkuId(orderData.goods[i].goodId)
+      let good = await this.model('goods').getDetailById(orderData.goods[i].goodId)
 
       if(!good.id){
         return this.fail(2001, '部分商品已下架')
       }
 
       let hasSku = false
+      let orderGoods = [] // 订单中的商品
       for(let j = 0, len = good.goods_sku.length; j < len; j++){
         if(good.goods_sku[j].id === orderData.goods[i].skuId) {
-          orderData.goods[i].retail_price = good.goods_sku[j].retail_price
-          orderData.goods[i].market_price = good.goods_sku[j].market_price
+          let _good = {}
+          // _good.order_id = null
+          _good.good_id = good.id
+          _good.sku_id = good.goods_sku[j].id
+          _good.good_name = good.name
+          _good.sku_name = good.goods_sku[j].name
+          _good.retail_price = good.goods_sku[j].retail_price // 卖价
 
-          orderData.goods[i].name = good.name
-          orderData.goods[i].list_pic_url = good.list_pic_url
-          orderData.goods[i].sku_name = good.goods_sku[j].name
+          _good.market_price = good.goods_sku[j].market_price // 市场价
+          _good.list_pic_url = good.list_pic_url // 列表图
+          _good.number = Math.abs(orderData.goods[i].number) // 数量
+
+          orderGoods.push(_good)
+
           goodsTotalPrice = goodsTotalPrice + good.goods_sku[j].retail_price * Math.abs(orderData.goods[i].number)
           hasSku = true
           break
@@ -162,14 +171,14 @@ module.exports = class extends Base {
 
 
     // 计算该所需单运费
-    let weightPrce = goodsTotalPrice > appConfig.freight_limit ? 0 : appConfig.freight_price
+    let freightPrice = goodsTotalPrice > appConfig.freight_limit ? 0 : appConfig.freight_price
     // 验证提交的运费是否正确
-    if(orderData.weightMoney < weightPrce){
+    if(orderData.freightMoney < freightPrice){
       return this.fail(2004, '运费错误')
     }
 
     // 验证实付费用
-    let realPay = goodsTotalPrice + weightPrce - orderData.werunMoney
+    let realPay = goodsTotalPrice + freightPrice - orderData.werunMoney
     if(Math.abs(orderData.payMoney - realPay) > 0.1){// 暂时允许1毛钱的误差
       return this.fail(2005, '订单金额错误')
     }
@@ -177,35 +186,53 @@ module.exports = class extends Base {
 
     //验证通过，存储订单
     // order 表的数据 wm:wechat mina, g:goods.length, p: real pay, a: address.id
-    let orderSN = 'wm' + moment().format('YYYYMMDDHHMMssSSS') + 'g' + orderData.goods.length + 'p' + payMoney * 100 + 'a' + orderData.address.id
+    let orderSN = 'wm' + moment().format('YYYYMMDDHHMMssSSS') + 'g' + orderData.goods.length + 'p' + orderData.payMoney * 100 + 'a' + orderData.address.id
     let orderTable = {
-      sn: orderSN, // 序列号
+      // id: null,
+      order_sn: orderSN, // 序列号
       user_id: think.userId,// 下单人id
-      status: 2, //0: 订单删除，1:订单失效， 2:下单未付款，3:已付款，4:订单取消, 5:已发货，6:已签收，7: 已退货
+
       pay_way: 1,//1:微信，2:支付宝
-      weight_pay: orderData.weightMoney, // 运费
-      werun_ded: orderData.werunMoney, // 微信抵扣费用
-      order_pay: orderData.payMoney, // 实付金额
+      freight_price: orderData.freightMoney, // 运费
+      werun_price: orderData.werunMoney, // 微信抵扣费用
+      goods_price: goodsTotalPrice, // 商品总价
+      order_price: orderData.payMoney, // 实付金额
 
       address_id: orderData.address.id,
-      address_name:orderData.address.name,
-      address_mobile:orderData.address.mobile,
-      address_college:orderData.address.college,
-      address_address:orderData.address.address,
+      address_consignee: orderData.address.name,// 收件人姓名
+      address_mobile: orderData.address.mobile,// 电话
+      address_college: orderData.address.college,// 学校
+      address_detail: orderData.address.address,// 详细地址
+
+      order_status: 2, //0: 订单删除，1:订单失效， 2:下单未付款，3:已付款，4:订单取消, 5:已发货，6:已签收，7: 已退货
+      update_time: ['exp', 'CURRENT_TIMESTAMP()']
+      // pay_time: null,
+      // add_time: null
     }
-    console.log(JSON.stringify(orderData))
 
 
+    const result = await this.transaction(async () => {
 
+      // 如果添加成功则 commit，失败则 rollback
+      try {
+        await this.startTrans();
+        let orderId = await this.model('order_goods').add(orderTable)
 
+        // 通过 db 方法让 order_goods 模型复用当前模型的数据库连接
+        const orderGoodsModel = this.model('order_goods').db(this.db())
 
-    return this.success()
+        for(let j = 0, len = good.goods_sku.length; j < len; j++){
+          orderGoods[i].order_id = orderId
+        }
+        await orderGoodsModel.addMany(orderGoods)
+        await this.commit();
+        return this.success();
+      } catch(e){
+        await this.rollback();
+        return this.fail(2006, '下单失败')
+      }
 
+    })
 
-
-    // await this.model('order_goods').addMany(orderGoodsData);
-    // await this.model('cart').clearBuyGoods();
-    //
-    // return this.success({orderInfo: orderInfo});
   }
 };
