@@ -16,7 +16,8 @@ module.exports = {
   // 可以公开访问的Action
   publicAction: [
     // 格式为： controller+action
-    'comment/list',
-    'comment/count'
+    // 'comment/list',
+    // 'comment/count',
+    'pay/notify'
   ]
 };

@@ -22,9 +22,15 @@ module.exports = class extends think.Model {
    * 清空已购买的商品
    * @returns {Promise.<*>}
    */
-  async clearBuyGoods() {
-    const $res = await this.model('cart').where({user_id: think.userId}).delete();
-    return $res;
+  async clearBuyGoods(goodAndSku) {
+    try{
+      for(let i = 0; l = goodAndSku.length; i++){
+        const $res = await this.model('cart').where({goods_id: goodAndSku[i].goodId, sku_id: goodAndSku[i].skuId}).delete();
+      }
+      return true
+    }catch (e){
+      return false
+    }
   }
   /**
    * 清除某一个商品（真删除）

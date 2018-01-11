@@ -20,6 +20,23 @@ module.exports = class extends think.Service {
   }
 
   /**
+   * 根据header中的X-Thankni-Token值获取用户openid
+   */
+  async getOpenId() {
+    const token = think.token;
+    if (!token) {
+      return 0;
+    }
+
+    const result = await this.parse();
+    if (think.isEmpty(result) || !result.openid) {
+      return null;
+    }
+
+    return result.openid;
+  }
+
+  /**
    * 根据值获取用户信息
    */
   async getUserInfo() {

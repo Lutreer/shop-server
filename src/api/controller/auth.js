@@ -2,8 +2,6 @@ const Base = require('./base.js');
 const rp = require('request-promise');
 const _ = require('lodash');
 const moment = require('moment');
-const APP_SECRET = require('../../common/config/secret').APP_SECRET
-const APP_APPID = require('../../common/config/secret').APP_APPID
 
 module.exports = class extends Base {
   /**
@@ -28,8 +26,8 @@ module.exports = class extends Base {
       qs: {
         grant_type: 'authorization_code',
         js_code: code,
-        secret: APP_SECRET,
-        appid: APP_APPID
+        secret: think.config('weixin.secret'),
+        appid: think.config('weixin.appid')
       }
     };
 
