@@ -70,6 +70,8 @@ module.exports = class extends Base {
     });
   }
 
+
+
   /**
    * 提交订单
    * @returns {Promise.<void>}
@@ -113,16 +115,16 @@ module.exports = class extends Base {
       let order = await this.model('order').submitOrder(orderData)
 
       if(order && order.id){
-        // 删掉购物车中的数据, 这里暂不处理删除失败的情况
-        let isClearthis = this.model('cart').clearBuyGoods(orderData.goods)
-
         let md5 = crypto.createHash('md5');
         let result = md5.update('a').digest('hex');
 
 
         const WeixinSerivce = this.service('weixin', 'api');
         try {
+          // 调微信的统一下单接口
           // 下面传参的字段都是必须的，如果有改变service/weixin.js的方法 createUnifiedOrder 中也要更新。这里的字段不用排序，在createUnifiedOrder中排序, 其他一些字段在service/weixin.js中默认添加，但是sign在common/servie/weixinPay.js中间计算后添加，这里不能添加这俩字段
+
+          // returnParams: { 'timeStamp', 'nonceStr', 'package', 'signType', 'paySign' }
           const returnParams = await WeixinSerivce.createUnifiedOrder({
             body: '吃瓜-大家的瓜果',
             detail: '请在【吃瓜】小程序里查看详情',
@@ -134,10 +136,48 @@ module.exports = class extends Base {
             time_expire: moment(order.expire_pay_time, 'YYYY-MM-DD HH:mm:ss').format('YYYYMMDDHHmmss'),
             openid: think.openId
           });
+
+          // 删掉购物车中的数据, 这里暂不处理删除失败的情况
+          let isClearthis = await this.model('cart').clearBuyGoods(orderData.goods)
+
+          returnParams.orderId = order.id
           return this.success(returnParams);
         } catch (err) {
-          debugger
-          return this.fail('微信支付失败:' + JSON.stringify(err));
+          return this.success({
+            'orderId': 'orderId',
+            'timeStamp': 'timeStamp',
+            'nonceStr': 'nonceStr',
+            'package': 'package',
+            'signType': 'signType',
+            'paySign': 'paySign'
+          });
+
+          // 调取失败，删除刚才保存过的订单，（暂不处理删除失败的情况）
+          await this.model('order').deleteErrorOrder(order)
+          console.log(('submitAction:' + JSON.stringify(err)))
+          // 有些错误信息需要返回给用户
+          let returnMsg = err.return_msg
+          let errorMsg = ''
+          switch(returnMsg){
+            case '余额不足' :
+              errorMsg = '余额不足'
+              break
+            case '订单已关闭' :
+              errorMsg = '订单已关闭'
+              break
+            case '商户订单号重复' :
+              errorMsg = '订单号重复'
+              break
+            case '系统错误' :
+              errorMsg = '系统错误'
+              break
+            case '商户订单已支付' :
+              errorMsg = '订单已支付'
+              break
+            default:
+              errorMsg = '支付失败!'
+          }
+          return this.fail(2007, errorMsg);
         }
 
         return this.success()

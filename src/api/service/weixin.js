@@ -35,7 +35,7 @@ module.exports = class extends think.Service {
       }, (res) => {
         if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
           const returnParams = {
-            'appid': res.appid,
+            // 'appid': res.appid,
             'timeStamp': parseInt(Date.now() / 1000) + '',
             'nonceStr': res.nonce_str,
             'package': 'prepay_id=' + res.prepay_id,

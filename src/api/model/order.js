@@ -61,6 +61,23 @@ module.exports = class extends think.Model {
     return handleOption;
   }
 
+  /**
+   * 删除掉错误的订单和相关数据
+   *
+   * 前提是该订单已经保存
+   * @param order
+   * @returns {Promise<void>}
+   */
+  async deleteErrorOrder(order) {
+    try {
+      await this.where({id: order.id}).delete()
+      const orderGoodsModel = this.model('order_goods').db(this.db())
+      await orderGoodsModel.where({order_id: order.id}).delete()
+      return true
+    } catch(e){
+      return false
+    }
+  }
 
 
   /**
@@ -220,9 +237,7 @@ module.exports = class extends think.Model {
       orderId = await this.add(orderTable)
       orderTable.id = orderId
       orderTable.goods = orderGoods
-      debugger
       const orderGoodsModel = this.model('order_goods').db(this.db())
-      debugger
       for(let j = 0, len = orderGoods.length; j < len; j++){
         orderGoods[j].order_id = orderId
       }
@@ -236,7 +251,6 @@ module.exports = class extends think.Model {
       if(orderId){
         this.where({id: orderId}).delete()
       }
-
       return null
     }
 
@@ -258,4 +272,5 @@ module.exports = class extends think.Model {
     //
     // })
   }
+
 };

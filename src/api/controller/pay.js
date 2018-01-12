@@ -56,4 +56,13 @@ module.exports = class extends Base {
 
     return `<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>`;
   }
+
+  /**
+   * 微信支付成功的的回调方法，验证用户是否正常支付
+   *
+   * 由微信支付系统调取，自己系统不能调
+   */
+  wxpayNotify(){
+
+  }
 };

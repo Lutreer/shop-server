@@ -7,7 +7,7 @@ module.exports = {
     secret: 'ddd3b456ee269750eda6ded093e9d065',
     appid: 'wx628852298e20424e',
     mch_id: 'mch_id',
-    notify_url: 'notify_url',
+    notify_url: 'https://api.thankni.com/order/wxpayNotify',
     key: 'key' // 微信商户平台(pay.weixin.qq.com)-->账户设置-->API安全-->密钥设置
   },
 

@@ -23,12 +23,14 @@ module.exports = class extends think.Model {
    * @returns {Promise.<*>}
    */
   async clearBuyGoods(goodAndSku) {
+    let cartModel = this.model('cart')
     try{
-      for(let i = 0; l = goodAndSku.length; i++){
-        const $res = await this.model('cart').where({goods_id: goodAndSku[i].goodId, sku_id: goodAndSku[i].skuId}).delete();
+      for(let i = 0, l = goodAndSku.length; i < l; i++){
+        const res = await cartModel.where({goods_id: goodAndSku[i].goodId, sku_id: goodAndSku[i].skuId}).delete();
       }
       return true
-    }catch (e){
+    }catch (err){
+      console.log("clearBuyGoods:" + JSON.stringify(err))
       return false
     }
   }
