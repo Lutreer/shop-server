@@ -84,11 +84,11 @@ module.exports = class extends think.Service {
   /**
    * 处理微信支付回调
    * @param notifyData
-   * @returns {{}}
+   * notifyData详细：https://pay.weixin.qq.com/wiki/doc/api/wxa/wxa_api.php?chapter=9_7
    */
   payNotify(notifyData) {
     if (think.isEmpty(notifyData)) {
-      return false;
+      return {code: false, msg: '【支付结果通知】未接收到任何数据'};
     }
 
     const notifyObj = {};
@@ -102,12 +102,15 @@ module.exports = class extends think.Service {
     }
     if (notifyObj.return_code !== 'SUCCESS' || notifyObj.result_code !== 'SUCCESS') {
       console.log('return_code false');
-      return false;
+      return {code: false, msg: 'return_code false'};
     }
     const signString = this.signQuery(this.buildQuery(notifyObj));
-    if (think.isEmpty(sign) || signString !== sign) {
-      return false;
+    if (think.isEmpty(sign)) {
+      return {code: false, msg: '【支付结果通知】中获取不到sign的值'};
     }
-    return notifyObj;
+    if (signString !== sign) {
+      return {code: false, msg: '数据校验失败'};
+    }
+    return {code: true, data: notifyObj};
   }
 };

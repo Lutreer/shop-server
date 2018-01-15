@@ -140,7 +140,11 @@ module.exports = class extends Base {
           // 删掉购物车中的数据, 这里暂不处理删除失败的情况
           let isClearthis = await this.model('cart').clearBuyGoods(orderData.goods)
 
-          returnParams.orderId = order.id
+          // 下面是一些故意混淆视听的数据，有用的只有statusCode是真的，表示的是订单的id
+          returnParams.payId = Math.random().toString(36).substr(2, 15) // 假payId
+          returnParams.orderSN = 'wx' + new Date().getTime() + Math.random().toString(36).substr(2, 15) // 假sn
+          returnParams.orderId =  new Date().getMilliseconds()// 假order id
+          returnParams.statusCode = order.id // 【真id在这里】
           return this.success(returnParams);
         } catch (err) {
           return this.success({
@@ -180,7 +184,6 @@ module.exports = class extends Base {
           return this.fail(2007, errorMsg);
         }
 
-        return this.success()
       }else{
         return this.fail(2006, '下单失败')
       }

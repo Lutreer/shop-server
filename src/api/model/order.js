@@ -220,7 +220,10 @@ module.exports = class extends think.Model {
       address_college: orderData.address.college,// 学校
       address_detail: orderData.address.address,// 详细地址
 
-      order_status: 2, //0: 订单删除，1:订单失效， 2:下单未付款，3:已付款，4:订单取消, 5:已发货，6:已签收，7: 已退货
+      // 0: 订单删除，1:订单失效，2:订单取消, 3: 退货中, 4: 已退货
+      // 5:下单未付款（未付款），6：仅客户端返回付款成功（下单中） 7:微信返回付款成功（已付款，5~20分钟后改为备货中），8：备货中（4~6可以退货，暂时不做）,  9:已发货，10:已签收（未评价），11：已评价
+      order_status: 5,
+
       update_time: ['exp', 'CURRENT_TIMESTAMP()'],
       start_pay_time: start_pay_time,
       expire_pay_time: expire_pay_time,
@@ -273,4 +276,43 @@ module.exports = class extends think.Model {
     // })
   }
 
+
+  /**
+   * 根据订单编号查找订单信息
+   */
+  async getOrderByOrderSn(orderSn) {
+    if (think.isEmpty(orderSn)) {
+      return {};
+    }
+    return this.where({order_sn: orderSn}).find();
+  }
+
+  /**
+   * 更新订单
+   */
+  async updateOrderInfo(orderId, data) {
+    if(payStatus && !think.isEmpty(data)){
+      delete data.id
+      delete data.order_sn
+      delete data.user_id
+      delete data.order_price
+      delete data.address_id
+      let row = await this.where({id: orderId}).limit(1).update(data);
+      return row
+    }else{
+      return false
+    }
+  }
+
+  /**
+   * 更改订单支付状态
+   * 默认 下单未付款
+   */
+  async updatePayStatus(orderId, payStatus = 5) {
+    if(payStatus && orderId){
+      return this.where({id: orderId}).limit(1).update({pay_status: parseInt(payStatus)});
+    }else{
+      return false
+    }
+  }
 };
