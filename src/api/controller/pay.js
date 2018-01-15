@@ -8,18 +8,21 @@ module.exports = class extends Base {
    * @returns {Promise<PreventPromise|void|Promise>}
    */
   async prepayAction() {
-    const orderId = this.get('orderId');
+    const orderId = this.post('orderId');
 
     const orderInfo = await this.model('order').where({id: orderId}).find();
     if (think.isEmpty(orderInfo)) {
-      return this.fail(400, '订单已取消');
+      return this.fail(400, '订单不存在');
     }
-    if (parseInt(orderInfo.pay_status) !== 0) {
-      return this.fail(400, '订单已支付，请不要重复操作');
+    if (parseInt(orderInfo.pay_status) > 6) {
+      return this.fail(400, '订单已支付，请勿重复支付');
     }
-    const openid = await this.model('user').where({id: orderInfo.user_id}).getField('weixin_openid', true);
+    if (parseInt(orderInfo.pay_status) === 2) {
+      return this.fail(400, '订单失效');
+    }
+    const openid = think.openId
     if (think.isEmpty(openid)) {
-      return this.fail('微信支付失败');
+      return this.fail(400, '微信支付失败');
     }
     const WeixinSerivce = this.service('weixin', 'api');
     try {

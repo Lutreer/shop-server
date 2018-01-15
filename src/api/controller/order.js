@@ -106,7 +106,7 @@ module.exports = class extends Base {
       //   address_college: orderData.address.college,// 学校
       //   address_detail: orderData.address.address,// 详细地址
       //
-      //   order_status: 2, //0: 订单删除，1:订单失效， 2:下单未付款，3:已付款，4:订单取消, 5:已发货，6:已签收，7: 已退货
+      //   order_status: 2, //0: 订单删除
       //   update_time: ['exp', 'CURRENT_TIMESTAMP()'],
       //   start_pay_time: start_pay_time,
       //   expire_pay_time: expire_pay_time,
@@ -148,7 +148,7 @@ module.exports = class extends Base {
           return this.success(returnParams);
         } catch (err) {
           return this.success({
-            'orderId': 'orderId',
+            'statusCode': order.id,
             'timeStamp': 'timeStamp',
             'nonceStr': 'nonceStr',
             'package': 'package',
