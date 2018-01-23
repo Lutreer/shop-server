@@ -3,7 +3,8 @@ module.exports = class extends think.Model {
   get relation() {
     return {
       goods: {
-        type: think.Model.BELONG_TO
+        type: think.Model.BELONG_TO,
+        field: 'id, is_hot, is_new, is_on_sale, like_volume, list_pic_url, name, sku_label, status, goods_brief'
       }
 
     }

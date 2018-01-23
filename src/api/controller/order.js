@@ -9,65 +9,63 @@ module.exports = class extends Base {
    * @return {Promise} []
    */
   async listAction() {
-    const orderList = await this.model('order').where({user_id: think.userId}).page(1, 10).countSelect();
-    const newOrderList = [];
-    for (const item of orderList.data) {
-      // 订单的商品
-      item.goodsList = await this.model('order_goods').where({order_id: item.id}).select();
-      item.goodsCount = 0;
-      item.goodsList.forEach(v => {
-        item.goodsCount += v.number;
-      });
-
-      // 订单状态的处理
-      item.order_status_text = await this.model('order').getOrderStatusText(item.id);
-
-      // 可操作的选项
-      item.handleOption = await this.model('order').getOrderHandleOption(item.id);
-
-      newOrderList.push(item);
-    }
-    orderList.data = newOrderList;
+    const page = this.get('page') || 1;
+    const size = this.get('size') || 10;
+    const orderList = await this.model('order').getOrdersList(page, size)
 
     return this.success(orderList);
   }
+  /**
+   * 取消订单
+   * @return {Promise} []
+   */
+  async cancelAction() {
+    const id = this.get('id')
+    if(id) {
+      let order = await his.model('order').getOrderById(id)
+      if(!order || order.order_status != 5) return this.fail() // 只有待付款状态可以取消
 
+      let num = await this.model('order').updatePayStatus(id, think.config('order_status').canceled)
+      if(num > 0){
+        return this.success();
+      }else{
+        return this.fail()
+      }
+    }else{
+      return this.fail()
+    }
+  }
+
+  /**
+   * 删除订单
+   * @return {Promise} []
+   */
+  async deleteAction() {
+    const id = this.get('id')
+    if(id) {
+      let order = await this.model('order').getOrderById(id)
+      if(!order || !(order.order_status == 1 || order.order_status == 2)) return this.fail() //只有失效或取消的订单可以删除
+      let num = await this.model('order').updatePayStatus(id, think.config('order_status').deleted)
+      if(num > 0){
+        return this.success();
+      }else{
+        return this.fail()
+      }
+    }else{
+      return this.fail()
+    }
+
+  }
   async detailAction() {
     const orderId = this.get('orderId');
-    const orderInfo = await this.model('order').where({user_id: think.userId, id: orderId}).find();
+    if(!orderId) return fail(400, '订单不存在');
+    const orderInfo = await this.model('order').getOrderById(orderId);
 
     if (think.isEmpty(orderInfo)) {
       return this.fail('订单不存在');
     }
-
-    orderInfo.province_name = await this.model('region').where({id: orderInfo.province}).getField('name', true);
-    orderInfo.city_name = await this.model('region').where({id: orderInfo.city}).getField('name', true);
-    orderInfo.district_name = await this.model('region').where({id: orderInfo.district}).getField('name', true);
-    orderInfo.full_region = orderInfo.province_name + orderInfo.city_name + orderInfo.district_name;
-
-    const orderGoods = await this.model('order_goods').where({order_id: orderId}).select();
-
-    // 订单状态的处理
-    orderInfo.order_status_text = await this.model('order').getOrderStatusText(orderId);
-    orderInfo.add_time = moment.unix(orderInfo.add_time).format('YYYY-MM-DD HH:mm:ss');
-    orderInfo.final_pay_time = moment('001234', 'Hmmss').format('mm:ss');
-    // 订单最后支付时间
-    if (orderInfo.order_status === 0) {
-      // if (moment().subtract(60, 'minutes') < moment(orderInfo.add_time)) {
-      orderInfo.final_pay_time = moment('001234', 'Hmmss').format('mm:ss');
-      // } else {
-      //     //超过时间不支付，更新订单状态为取消
-      // }
-    }
-
-    // 订单可操作的选择,删除，支付，收货，评论，退换货
-    const handleOption = await this.model('order').getOrderHandleOption(orderId);
-
-    return this.success({
-      orderInfo: orderInfo,
-      orderGoods: orderGoods,
-      handleOption: handleOption
-    });
+    orderInfo['order_status_text'] = think.config('order_status')[orderInfo.order_status]
+    return this.success(orderInfo)
   }
 
 
@@ -140,11 +138,7 @@ module.exports = class extends Base {
           // 删掉购物车中的数据, 这里暂不处理删除失败的情况
           let isClearthis = await this.model('cart').clearBuyGoods(orderData.goods)
 
-          // 下面是一些故意混淆视听的数据，有用的只有statusCode是真的，表示的是订单的id
-          returnParams.payId = Math.random().toString(36).substr(2, 15) // 假payId
-          returnParams.orderSN = 'wx' + new Date().getTime() + Math.random().toString(36).substr(2, 15) // 假sn
-          returnParams.orderId =  new Date().getMilliseconds()// 假order id
-          returnParams.statusCode = order.id // 【真id在这里】
+          returnParams.orderId = order.id
           return this.success(returnParams);
         } catch (err) {
           return this.success({

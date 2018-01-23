@@ -2,6 +2,29 @@ const _ = require('lodash');
 const moment = require('moment');
 
 module.exports = class extends think.Model {
+  get relation() {
+    return {
+      order_goods: {
+        type: think.Model.HAS_MANY,
+        where: {'status': 1}
+      }
+    }
+  }
+  async getOrdersList(page, size) {
+    let orders = await this.setRelation('order_goods')
+      .where('order_status > 0')
+      .field('id, add_time, order_sn, order_price, order_status')
+      .order(['add_time DESC'])
+      .page(page, size)
+      .countSelect();
+    for(let i = 0; i < orders.data.length; i++){
+      orders.data[i]['order_status_text'] = think.config('order_status')[orders.data[i].order_status]
+    }
+    return orders;
+  }
+
+
+
   /**
    * 获取订单可操作的选项
    * @param orderId
@@ -62,11 +85,18 @@ module.exports = class extends think.Model {
   }
 
   /**
+   * 获取订单
+   * @returns {Promise<void>}
+   */
+  async getOrderById(id) {
+    let order = await this.where({id: id}).find()
+    return order
+  }
+
+  /**
    * 删除掉错误的订单和相关数据
    *
    * 前提是该订单已经保存
-   * @param order
-   * @returns {Promise<void>}
    */
   async deleteErrorOrder(order) {
     try {
@@ -78,6 +108,7 @@ module.exports = class extends think.Model {
       return false
     }
   }
+
 
 
   /**
@@ -116,6 +147,7 @@ module.exports = class extends think.Model {
           _good.order_id = null
           _good.goods_id = good.id
           _good.sku_id = good.goods_sku[j].id
+          _good.sku_label = good.sku_label
           _good.goods_name = good.name
           _good.sku_name = good.goods_sku[j].name
           _good.retail_price = good.goods_sku[j].retail_price // 卖价
@@ -199,7 +231,7 @@ module.exports = class extends think.Model {
 
     //验证通过，存储订单
     // order 表的数据 wm:wechat mina, g:goods.length, p: real pay, a: address.id
-    let orderSN = 'wm' + moment().format('YYYYMMDDHHMMssSSS') + 'g' + orderData.goods.length + 'p' + orderData.payMoney * 100 + 'a' + orderData.address.id
+    let orderSN = 'wx' + moment().format('YYYYMMDDHHMMssSSS') + 'g' + orderData.goods.length + 'p' + orderData.payMoney * 100 + 'a' + orderData.address.id
 
     let start_pay_time = moment().format('YYYY-MM-DD HH:mm:ss')
     let expire_pay_time = moment(start_pay_time, 'YYYY-MM-DD HH:mm:ss').add(60, 'minute').format('YYYY-MM-DD HH:mm:ss')
@@ -221,7 +253,7 @@ module.exports = class extends think.Model {
       address_detail: orderData.address.address,// 详细地址
 
       // 0: 订单删除，1:订单失效，2:订单取消, 3: 退货中, 4: 已退货
-      // 5:下单未付款（未付款），6：仅客户端返回付款成功（下单中） 7:微信返回付款成功（已付款，5~20分钟后改为备货中），8：备货中（4~6可以退货，暂时不做）,  9:已发货，10:已签收（未评价），11：已评价
+      // 5:下单未付款（未付款），6：仅客户端返回付款成功（下单中） 7:微信返回付款成功（已付款，5~20分钟后改为备货中，TODO 定时任务,还有失效订单），8：备货中（4~6可以退货，暂时不做）,  9:已发货，10:已签收（未评价），11：已评价
       order_status: 5,
 
       update_time: ['exp', 'CURRENT_TIMESTAMP()'],
@@ -284,7 +316,7 @@ module.exports = class extends think.Model {
     if (think.isEmpty(orderSn)) {
       return {};
     }
-    return this.where({order_sn: orderSn}).find();
+    return await this.where({order_sn: orderSn}).find();
   }
 
   /**
@@ -308,11 +340,8 @@ module.exports = class extends think.Model {
    * 更改订单支付状态
    * 默认 下单未付款
    */
-  async updatePayStatus(orderId, payStatus = 5) {
-    if(payStatus && orderId){
-      return this.where({id: orderId}).limit(1).update({pay_status: parseInt(payStatus)});
-    }else{
-      return false
-    }
+  async updatePayStatus(orderId, payStatus = think.config('order_status').nonPayment) {
+      let row = await this.where({id: orderId}).update({order_status: parseInt(payStatus)});
+      return row
   }
 };

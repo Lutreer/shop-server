@@ -64,7 +64,7 @@ module.exports = class extends Base {
             goodsSkuModel.where({id: goods_sku[i].id}).update(goods_sku[i])
           }else{
             delete goods_sku[i].id
-            goods_sku[i].goods_id = good_id
+            goods_sku[i].goods_id = id
             goodsSkuModel.add(goods_sku[i])
           }
 

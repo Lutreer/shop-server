@@ -10,32 +10,60 @@ module.exports = class extends Base {
   async prepayAction() {
     const orderId = this.post('orderId');
 
-    const orderInfo = await this.model('order').where({id: orderId}).find();
-    if (think.isEmpty(orderInfo)) {
+    const order = await this.model('order').where({id: orderId}).find();
+    if (think.isEmpty(order)) {
       return this.fail(400, '订单不存在');
     }
-    if (parseInt(orderInfo.pay_status) > 6) {
+    if (parseInt(order.pay_status) > 6) {
       return this.fail(400, '订单已支付，请勿重复支付');
     }
-    if (parseInt(orderInfo.pay_status) === 2) {
+    if (parseInt(order.pay_status) === 2) {
       return this.fail(400, '订单失效');
     }
-    const openid = think.openId
-    if (think.isEmpty(openid)) {
-      return this.fail(400, '微信支付失败');
-    }
+
     const WeixinSerivce = this.service('weixin', 'api');
+
+    let that = this
     try {
       const returnParams = await WeixinSerivce.createUnifiedOrder({
-        openid: openid,
-        body: '订单编号：' + orderInfo.order_sn,
-        out_trade_no: orderInfo.order_sn,
-        total_fee: parseInt(orderInfo.actual_price * 100),
-        spbill_create_ip: ''
+        body: '吃瓜-大家的瓜果',
+        detail: '请在【吃瓜】小程序里查看详情',
+        goods_tag: '微信运动抵扣' + order.werun_price + '元',
+        out_trade_no:order.order_sn,
+        total_fee: order.order_price,
+        spbill_create_ip: that.ctx.ip.length > 15 ? '127.0.0.1' : that.ctx.ip, // 避免开发时候报错
+        time_start: moment(order.start_pay_time, 'YYYY-MM-DD HH:mm:ss').format('YYYYMMDDHHmmss'),
+        time_expire: moment(order.expire_pay_time, 'YYYY-MM-DD HH:mm:ss').format('YYYYMMDDHHmmss'),
+        openid: think.openId
       });
+
+      returnParams.orderId = order.id
       return this.success(returnParams);
     } catch (err) {
-      return this.fail('微信支付失败');
+      console.log(('prepayAction:' + JSON.stringify(err)))
+      // 有些错误信息需要返回给用户
+      let returnMsg = err.return_msg
+      let errorMsg = ''
+      switch(returnMsg){
+        case '余额不足' :
+          errorMsg = '余额不足'
+          break
+        case '订单已关闭' :
+          errorMsg = '订单已关闭'
+          break
+        case '商户订单号重复' :
+          errorMsg = '订单号重复'
+          break
+        case '系统错误' :
+          errorMsg = '系统错误'
+          break
+        case '商户订单已支付' :
+          errorMsg = '订单已支付'
+          break
+        default:
+          errorMsg = '支付失败!'
+      }
+      return this.fail(2007, errorMsg);
     }
   }
   /**

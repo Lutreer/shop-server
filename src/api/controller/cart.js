@@ -36,6 +36,9 @@ module.exports = class extends Base {
    * @returns {Promise.<*>}
    */
   async addAction() {
+    // 购物车是否满
+
+
     const goodsId = this.post('goodsId');
     const skuId = this.post('skuId');
     const goodsNum = this.post('goodsNum') || 1;
