@@ -10,7 +10,7 @@ module.exports = class extends Base {
     const data = await model.field(['id', 'name']).where({is_show: 1, status: 1}).select();
     return this.success({
       categoryList: data,
-      searchPlaceholder: '吃嘛嘛香，身体倍儿棒'
+      searchPlaceholder: '在"丫米"有更实惠的美食'
     });
   }
 

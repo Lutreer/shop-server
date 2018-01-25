@@ -10,16 +10,38 @@ module.exports = class extends Base {
   async prepayAction() {
     const orderId = this.post('orderId');
 
-    const order = await this.model('order').where({id: orderId}).find();
+    const order = await this.model('order').where({id: orderId, order_status:['!=', 0]}).find();
     if (think.isEmpty(order)) {
       return this.fail(400, '订单不存在');
     }
-    if (parseInt(order.pay_status) > 6) {
-      return this.fail(400, '订单已支付，请勿重复支付');
+
+    if (parseInt(order.order_status) > think.config('order_status').booking) {
+      return this.fail(400, '已支付，请勿重复支付');
     }
-    if (parseInt(order.pay_status) === 2) {
-      return this.fail(400, '订单失效');
+    if (parseInt(order.order_status) === think.config('order_status').expired) {
+      return this.fail(2008, '订单已失效: 付款超时');
     }
+    if(new Date() < new Date(order.expire_pay_time)) return this.fail(2008, '订单已失效: 付款超时');
+
+    // 验证订单中的商品是否有效
+    let goodsPrice = 0
+    for(let i = 0, l = order.order_goods.length; i < l; i++){
+      let goodAndSku = await this.model("goods").getGoodAndSku(order.order_goods[i].goods_id, order.order_goods[i].sku_id)
+      if(!goods) {
+        this.model("order").updatePayStatus(order.id, think.config('order_status').expired)
+        return this.fail(2009, '订单已失效:商品价格变动');
+      }
+
+      // 计算价格是否改变
+      goodsPrice = goodsPrice + goodAndSku.goods_sku[0].retail_price * Math.abs(order.order_goods[i].number)
+
+    }
+    if(goodsPrice != order.goods_price) {
+      return this.fail(400, '商品价格变动');
+    }
+
+
+
 
     const WeixinSerivce = this.service('weixin', 'api');
 
@@ -109,7 +131,7 @@ module.exports = class extends Base {
     if(!orderId) return this.fail(400, '支付失败')
 
     try{
-      let rowNum = await this.model('order').where({id: orderId, order_status: 6, })
+      let rowNum = await this.model('order').where({id: orderId, order_status: think.config('order_status').paid })
 
       if(rowNum <= 0) return this.fail(400, '支付失败')
 

@@ -31,8 +31,9 @@ module.exports = {
     7: '已付款',
     8: '备货中',
     9: '已发货',
-    10: '已签收',
-    11: '已评价',
+    10: '已送达',
+    11: '已签收',
+    12: '已评价',
 
     deleted: 0,
     expired: 1,
@@ -44,8 +45,9 @@ module.exports = {
     paid: 7,
     stockUp: 8,
     delivered: 9,
-    received: 10,
-    reviewed: 11
+    Unclaimed: 10,
+    received: 11,
+    reviewed: 12
 
   }
 

@@ -18,6 +18,7 @@ module.exports = {
     // 格式为： controller+action
     // 'comment/list',
     // 'comment/count',
-    'pay/notify'
+    'pay/notify',
+    'feedback/add'
   ]
 };

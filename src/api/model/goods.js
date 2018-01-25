@@ -65,4 +65,35 @@ module.exports = class extends think.Model {
     return goods;
   }
 
+  /**
+   * 通过goodId和skuId获取该商品和规格信息
+   * @returns {Promise<void>}
+   */
+  async getGoodAndSku(goodId, skuId){
+    const goods = await this.getProductList(goodId)
+    if(think.isEmpty(goods)){
+      return false
+    }else{
+      if(goods.goods_sku.length > 0){
+        // 是否youskuId
+        let hasSku = false
+        for(let i = 0, l = goods.goods_sku.length; i < l; i++){
+          if(skuId == goods.goods_sku[i].id) {
+            hasSku = true
+            let sku = goods.goods_sku[i]
+            delete goods.goods_sku
+            goods.goods_sku = sku
+          }
+        }
+        if(!hasSku){
+          return false
+        }else{
+          return goods
+        }
+      }else{
+        return false
+      }
+    }
+  }
+
 };
