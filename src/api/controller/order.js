@@ -185,7 +185,24 @@ module.exports = class extends Base {
       return this.fail(2006, '下单失败')
     }
 
-
-
   }
-};
+
+  /**
+   * 确认收货
+   * @returns {Promise<*>}
+   */
+  async confirmReceiveAction() {
+    const orderId = this.post('orderId');
+    if(!orderId) return this.fail(400, '订单不存在');
+    const orderInfo = await this.model('order').getOrderById(orderId);
+
+    if (think.isEmpty(orderInfo)) {
+      return this.fail('订单不存在');
+    }
+    if(orderInfo.order_status != think.config('order_status').Unclaimed){
+      return this.fail('还不能收货哦');
+    }
+    await this.model('order').where({id: orderId}).update({order_status: think.config('order_status').received})
+    return this.success()
+  }
+}
