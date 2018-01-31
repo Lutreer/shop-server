@@ -1,4 +1,5 @@
 const Base = require('./base.js');
+const moment = require('moment');
 
 module.exports = class extends Base {
   /**
@@ -6,19 +7,11 @@ module.exports = class extends Base {
    * @return {Promise} []
    */
   async indexAction() {
-    const page = this.get('page') || 1;
-    const size = this.get('size') || 10;
-    const orderSn = this.get('orderSn') || '';
-    const consignee = this.get('consignee') || '';
+    const payTime = this.get('payTime') || moment().format('YYYY-MM-DD HH:mm');
 
     const model = this.model('order');
-    const data = await model.where({order_sn: ['like', `%${orderSn}%`], consignee: ['like', `%${consignee}%`]}).order(['id DESC']).page(page, size).countSelect();
-    const newList = [];
-    for (const item of data.data) {
-      item.order_status_text = await this.model('order').getOrderStatusText(item.id);
-      newList.push(item);
-    }
-    data.data = newList;
+    const data = await model.where({add_time: ['<=', payTime]}).select();
+
     return this.success(data);
   }
 
