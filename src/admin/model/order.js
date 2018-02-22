@@ -9,6 +9,40 @@ module.exports = class extends think.Model {
       }
     }
   }
+
+  /**
+   * 更改订单支付状态
+   * 默认 下单未付款
+   */
+  async updatePayStatus(orderId, payStatus = think.config('order_status').nonPayment) {
+    let row = await this.where({id: orderId}).update({order_status: parseInt(payStatus)});
+    return row
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /**
    * 生成订单的编号order_sn
    * @returns {string}

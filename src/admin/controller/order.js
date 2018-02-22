@@ -7,12 +7,27 @@ module.exports = class extends Base {
    * @return {Promise} []
    */
   async indexAction() {
-    const payTime = this.get('payTime') || moment().format('YYYY-MM-DD HH:mm');
+    const startTime = this.get('startTime') ? moment(this.get('startTime')).format('YYYY-MM-DD HH:mm:ss') : moment().subtract(60, 'day').format('YYYY-MM-DD 00:00:00');
+    const endTime = this.get('endTime') ? moment(this.get('endTime')).format('YYYY-MM-DD HH:mm:ss') : moment().add(1, 'days').format('YYYY-MM-DD 00:00:00');
 
     const model = this.model('order');
-    const data = await model.where({add_time: ['<=', payTime]}).select();
+    const data = await model.where({add_time: {'>': startTime, '<': endTime}}).select();
 
     return this.success(data);
+  }
+
+  // 手动修改订单状态
+  async changeOrderStatusAction() {
+    let orderId = this.post('orderId')
+    let orderStatus = this.post('orderStatus')
+
+    try{
+      await this.model('order').updatePayStatus(orderId, orderStatus)
+      return this.success()
+    }catch (e){
+      return this.fail()
+    }
+
   }
 
   async infoAction() {

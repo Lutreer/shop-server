@@ -2,9 +2,9 @@
   "apps": [{
     "name": "thankni",
     "script": "production.js",
-    "cwd": "/var/www/thankni",
+    "cwd": "/var/www/thankni/shop-server",
     "exec_mode": "fork",
-    "max_memory_restart": "1G",
+    "max_memory_restart": "896M",
     "autorestart": true,
     "node_args": [],
     "args": [],
