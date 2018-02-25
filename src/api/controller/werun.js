@@ -2,7 +2,7 @@ const Base = require('../../api/controller/base.js');
 let WXBizDataCrypt = require('../service/WXBizDataCrypt.js');
 const moment = require('moment');
 
-const appId = require('../../common/config/secret').APP_APPID
+const appId = think.config('weixin').appid
 
 module.exports = class extends Base {
   /**

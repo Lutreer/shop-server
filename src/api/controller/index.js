@@ -17,7 +17,7 @@ module.exports = class extends Base {
 
       hotGoodsList: hotGoods.data,
       brand: {
-        title: '里面有段话',
+        title: '有的吃',
         list: brandList
       },
       topicList: topicList,

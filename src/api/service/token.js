@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = require('../../common/config/secret').JWT_SECRET
+const JWT_SECRET = think.config('jwt_secret')
 
 module.exports = class extends think.Service {
   /**

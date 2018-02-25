@@ -1,7 +1,7 @@
 const Base = require('./base.js');
 const qiniu = require('qiniu')
-const accessKey = require('../../common/config/secret').QINIU_ACCESSKEY
-const secretKey = require('../../common/config/secret').QINIU_SECRETKEY
+const accessKey = think.config('qiniu').accesskey
+const secretKey = think.config('qiniu').secretkey
 const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
 module.exports = class extends Base {
   async uploadTokenAction() {
@@ -31,10 +31,11 @@ module.exports = class extends Base {
             resolve(err, respBody, respInfo)
           }
         })
-      }).then(function () {
-        return _this.success({}, '删除成功');
-      }).catch(function () {
-        return _this.fail(400, '删除失败')
+      }).then(function (res) {
+        return _this.success({}, '七牛云:删除成功');
+      }).catch(function (err) {
+        debugger
+        return _this.fail(400, '七牛云:删除失败('+ err.message +')')
       })
     }
   }

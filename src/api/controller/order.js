@@ -1,6 +1,6 @@
 const Base = require('./base.js')
 const moment = require('moment')
-const appId = require('../../common/config/secret').APP_APPID
+const appId = think.config('weixin').appid
 let crypto = require('crypto');
 
 module.exports = class extends Base {
