@@ -39,10 +39,10 @@ exports.model = {
     database: 'thankni',
     prefix: '',
     encoding: 'utf8mb4',
-    host: '127.0.0.1',
+    host: '140.143.225.164',
     port: '3306',
     user: 'root',
-    password: '123151',
+    password: '901005',
     dateStrings: true
   }
 };

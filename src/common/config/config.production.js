@@ -2,14 +2,19 @@
 module.exports = {
   default_module: 'api',
 
-  jwt_secret: '',
+  jwt_secret: 'SLwweedfd45ssdd@#@@gf',
   weixin: {
-
+    secret: '5acfd32e5e407abdef5e3b49beda3b74',
+    appid: 'wx628852298e20424e',
+    mch_id: 'mch_id',
+    notify_url: 'https://www.thankni.com/order/wxpayNotify',
+    key: 'key' // 微信商户平台(pay.weixin.qq.com)-->账户设置-->API安全-->密钥设置
   },
 
 
   qiniu: {
-
+    accesskey: 'ZhKyjLTQtJXIGv7lPxUAQHxynpmirLL3oFfchgbE',
+    secretkey: 'esjq1DRjgAmisoqu-GpzkuLhNt-bySuUZ9ZyLJsh'
   },
 
 
