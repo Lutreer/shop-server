@@ -95,6 +95,7 @@ module.exports = class extends think.Model {
           _good.market_price = good.goods_sku[j].market_price // 市场价
           _good.list_pic_url = good.list_pic_url // 列表图
           _good.number = Math.abs(orderData.goods[i].number) // 数量
+          _good.add_time = moment().format('YYYY-MM-DD HH:mm:ss')
 
           orderGoods.push(_good)
 

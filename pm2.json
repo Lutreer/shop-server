@@ -7,9 +7,11 @@
     "max_memory_restart": "896M",
     "autorestart": true,
     "node_args": [],
+    "error_file" : "/var/www/thankni/logs/app-err.log", // 错误日志路径
+    "out_file"   : "/var/www/thankni/logs/app-out.log", // 普通日志路径
     "args": [],
     "env": {
-      
+      "NODE_ENV": "production"
     }
   }]
 }

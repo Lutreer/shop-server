@@ -124,8 +124,8 @@ module.exports = class extends Base {
 
           // returnParams: { 'timeStamp', 'nonceStr', 'package', 'signType', 'paySign' }
           const returnParams = await WeixinSerivce.createUnifiedOrder({
-            body: '吃瓜-大家的瓜果',
-            detail: '请在【吃瓜】小程序里查看详情',
+            body: '丫米--学生品质',
+            detail: '请在【丫米】小程序里查看详情',
             goods_tag: '微信运动抵扣' + order.werun_price + '元',
             out_trade_no:order.order_sn,
             total_fee: order.order_price,
