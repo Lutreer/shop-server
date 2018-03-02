@@ -28,7 +28,7 @@ runtime/
 app/
 
 # config data
-/config.development.js
-/config.production.js
-/adapter.production.js
-/adapter.development.js
+config.development.js
+config.production.js
+adapter.production.js
+adapter.development.js
