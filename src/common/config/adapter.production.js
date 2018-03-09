@@ -41,8 +41,8 @@ exports.model = {
     encoding: 'utf8mb4',
     host: '140.143.225.164',
     port: '3306',
-    user: 'root',
-    password: '901005',
+    user: 'thankni',
+    password: 'Leasong&123',
     dateStrings: true
   }
 };
