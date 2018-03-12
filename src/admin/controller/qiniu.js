@@ -34,7 +34,6 @@ module.exports = class extends Base {
       }).then(function (res) {
         return _this.success({}, '七牛云:删除成功');
       }).catch(function (err) {
-        debugger
         return _this.fail(400, '七牛云:删除失败('+ err.message +')')
       })
     }

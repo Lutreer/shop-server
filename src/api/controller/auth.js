@@ -49,7 +49,6 @@ module.exports = class extends Base {
     let userId = await this.model('user').where({ weixin_openid: sessionData.openid }).getField('id', true);
     if (think.isEmpty(userId)) {
       // 注册
-      //   debugger
       userId = await this.model('user').add({
         username: '微信用户' + think.uuid(6),
         password: sessionData.openid,
