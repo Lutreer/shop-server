@@ -32,7 +32,9 @@ module.exports = class extends Base {
   async infoAction() {
     const id = this.get('id');
     const model = this.model('goods');
-    const data = await model.getDetailById(id);
+    let data = await model.getDetailById(id);
+    const commonPicUrl = await this.model('app_config').getGoodCommonPic()
+    data.desc_pic_url = data.desc_pic_url.split(",").push(commonPicUrl.good_footer_pic_url).unshift(commonPicUrl.good_header_pic_url).toString();
 
     return this.success(data);
   }

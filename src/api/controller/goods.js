@@ -23,7 +23,10 @@ module.exports = class extends Base {
     // 记录用户的足迹 TODO
     // await await this.model('footprint').addFootprint(think.userId, goodsId);
 
-    // return this.json(jsonData);
+    // 公共页眉页脚
+    const commonPicUrl = await this.model('app_config').getGoodCommonPic()
+    goods.desc_pic_url = goods.desc_pic_url.split(",").push(commonPicUrl.good_footer_pic_url).unshift(commonPicUrl.good_header_pic_url).toString();
+
     return this.success({
       goods: goods,
       cartCount: cartCount
