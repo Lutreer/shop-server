@@ -1,5 +1,5 @@
 /**
- * Created by leasong on 2017/12/30.
+ * Created by lutreer on 2017/12/30.
  * 暂时只做个记录，后期要用到项目中，规范错误code
  */
 module.exports = {
